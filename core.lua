@@ -1,4 +1,4 @@
--- King Legacy Auto Bounty + Direct Tier System (v9.5 Ultimate Luxury UI & ESP Core)
+-- King Legacy Auto Bounty + Direct Tier System (v9.6 Rounded Font & Luxury UI Core)
 
 local Players = game:GetService("Players")
 local VIM = game:GetService("VirtualInputManager")
@@ -11,7 +11,7 @@ local Camera = workspace.CurrentCamera
 local lp = Players.LocalPlayer
 local userTier = getgenv().USER_TIER or "VIP"
 
--- ========== 多語言字典 (含奢華符號點綴) ==========
+-- ========== 多語言字典 (全域圓潤奢華符號版) ==========
 local currentLang = "ZH"
 
 local Lang = {
@@ -96,12 +96,12 @@ local SlotKeys = {
 
 -- 奢華主介面
 local gui = Instance.new("ScreenGui")
-gui.Name = "KingLegacy_LuxuryHub_v95"
+gui.Name = "KingLegacy_LuxuryHub_v96"
 gui.Parent = game:GetService("CoreGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 350, 0, userTier == "VIP" and 480 or 115)
-mainFrame.Position = UDim2.new(0, 40, 0.5, userTier == "VIP" and -240 or -57)
+mainFrame.Size = UDim2.new(0, 360, 0, userTier == "VIP" and 500 or 120)
+mainFrame.Position = UDim2.new(0, 40, 0.5, userTier == "VIP" and -250 or -60)
 mainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
 mainFrame.Active = true
 mainFrame.Parent = gui
@@ -115,7 +115,7 @@ stroke.Transparency = 0.3
 stroke.Parent = mainFrame
 
 local topBar = Instance.new("Frame")
-topBar.Size = UDim2.new(1, 0, 0, 40)
+topBar.Size = UDim2.new(1, 0, 0, 42)
 topBar.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
 topBar.Parent = mainFrame
 applyCorner(topBar, 12)
@@ -126,29 +126,30 @@ titleLabel.Position = UDim2.new(0, 14, 0, 0)
 titleLabel.BackgroundTransparency = 1
 titleLabel.Text = userTier == "VIP" and Lang[currentLang].titleVIP or Lang[currentLang].titleFree
 titleLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.TextSize = 11
+titleLabel.Font = Enum.Font.SourceSansBold -- 圓潤飽滿的字體樣式
+titleLabel.TextSize = 13 -- 稍微放大，保持極佳圓潤辨識度
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = topBar
 
 local mainLangBtn = Instance.new("TextButton")
-mainLangBtn.Size = UDim2.new(0, 36, 0, 24)
+mainLangBtn.Size = UDim2.new(0, 36, 0, 26)
 mainLangBtn.Position = UDim2.new(1, -72, 0, 8)
 mainLangBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
 mainLangBtn.Text = currentLang == "ZH" and "EN" or "中"
 mainLangBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
-mainLangBtn.Font = Enum.Font.GothamBold
-mainLangBtn.TextSize = 11
+mainLangBtn.Font = Enum.Font.SourceSansBold
+mainLangBtn.TextSize = 12
 mainLangBtn.Parent = topBar
 applyCorner(mainLangBtn, 6)
 
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 26, 0, 26)
-closeBtn.Position = UDim2.new(1, -32, 0, 7)
+closeBtn.Position = UDim2.new(1, -32, 0, 8)
 closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 60)
 closeBtn.Text = "✕"
 closeBtn.TextColor3 = Color3.new(1, 1, 1)
-closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextSize = 13
 closeBtn.Parent = topBar
 applyCorner(closeBtn, 6)
 
@@ -205,13 +206,13 @@ end)
 -- FREE 介面
 if userTier == "FREE" then
     local aimBtn = Instance.new("TextButton")
-    aimBtn.Size = UDim2.new(1, -24, 0, 44)
-    aimBtn.Position = UDim2.new(0, 12, 0, 52)
+    aimBtn.Size = UDim2.new(1, -24, 0, 46)
+    aimBtn.Position = UDim2.new(0, 12, 0, 54)
     aimBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
     aimBtn.Text = Lang[currentLang].btnAimOff
     aimBtn.TextColor3 = Color3.new(1, 1, 1)
-    aimBtn.Font = Enum.Font.GothamBold
-    aimBtn.TextSize = 11
+    aimBtn.Font = Enum.Font.SourceSansBold
+    aimBtn.TextSize = 13
     aimBtn.Parent = mainFrame
     applyCorner(aimBtn, 8)
     uiElements.aimBtn = aimBtn
@@ -226,8 +227,8 @@ end
 -- VIP 奢華介面
 if userTier == "VIP" then
     local statusFrame = Instance.new("Frame")
-    statusFrame.Size = UDim2.new(1, -24, 0, 32)
-    statusFrame.Position = UDim2.new(0, 12, 0, 48)
+    statusFrame.Size = UDim2.new(1, -24, 0, 34)
+    statusFrame.Position = UDim2.new(0, 12, 0, 50)
     statusFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
     statusFrame.Parent = mainFrame
     applyCorner(statusFrame, 8)
@@ -245,15 +246,15 @@ if userTier == "VIP" then
     statusText.BackgroundTransparency = 1
     statusText.Text = Lang[currentLang].statusOff
     statusText.TextColor3 = Color3.fromRGB(190, 190, 210)
-    statusText.Font = Enum.Font.GothamMedium
-    statusText.TextSize = 11
+    statusText.Font = Enum.Font.SourceSansSemibold
+    statusText.TextSize = 12
     statusText.TextXAlignment = Enum.TextXAlignment.Left
     statusText.Parent = statusFrame
     uiElements.statusText = statusText
 
     local tabContainer = Instance.new("Frame")
-    tabContainer.Size = UDim2.new(1, -24, 0, 30)
-    tabContainer.Position = UDim2.new(0, 12, 0, 86)
+    tabContainer.Size = UDim2.new(1, -24, 0, 32)
+    tabContainer.Position = UDim2.new(0, 12, 0, 90)
     tabContainer.BackgroundTransparency = 1
     tabContainer.Parent = mainFrame
 
@@ -262,8 +263,8 @@ if userTier == "VIP" then
     mainTabBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
     mainTabBtn.Text = Lang[currentLang].tabMain
     mainTabBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
-    mainTabBtn.Font = Enum.Font.GothamBold
-    mainTabBtn.TextSize = 11
+    mainTabBtn.Font = Enum.Font.SourceSansBold
+    mainTabBtn.TextSize = 12
     mainTabBtn.Parent = tabContainer
     applyCorner(mainTabBtn, 8)
     uiElements.mainTabBtn = mainTabBtn
@@ -274,15 +275,15 @@ if userTier == "VIP" then
     skillTabBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
     skillTabBtn.Text = Lang[currentLang].tabSkill
     skillTabBtn.TextColor3 = Color3.fromRGB(140, 140, 160)
-    skillTabBtn.Font = Enum.Font.GothamBold
-    skillTabBtn.TextSize = 11
+    skillTabBtn.Font = Enum.Font.SourceSansBold
+    skillTabBtn.TextSize = 12
     skillTabBtn.Parent = tabContainer
     applyCorner(skillTabBtn, 8)
     uiElements.skillTabBtn = skillTabBtn
 
     local pageContainer = Instance.new("Frame")
-    pageContainer.Size = UDim2.new(1, -24, 0, 335)
-    pageContainer.Position = UDim2.new(0, 12, 0, 124)
+    pageContainer.Size = UDim2.new(1, -24, 0, 350)
+    pageContainer.Position = UDim2.new(0, 12, 0, 130)
     pageContainer.BackgroundTransparency = 1
     pageContainer.Parent = mainFrame
 
@@ -310,24 +311,24 @@ if userTier == "VIP" then
     end)
 
     local autoBtn = Instance.new("TextButton")
-    autoBtn.Size = UDim2.new(1, 0, 0, 36)
+    autoBtn.Size = UDim2.new(1, 0, 0, 38)
     autoBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
     autoBtn.Text = Lang[currentLang].btnAutoStart
     autoBtn.TextColor3 = Color3.fromRGB(0, 230, 130)
-    autoBtn.Font = Enum.Font.GothamBold
-    autoBtn.TextSize = 12
+    autoBtn.Font = Enum.Font.SourceSansBold
+    autoBtn.TextSize = 13
     autoBtn.Parent = mainPage
     applyCorner(autoBtn, 8)
     uiElements.autoBtn = autoBtn
 
     local aimBtn = Instance.new("TextButton")
-    aimBtn.Size = UDim2.new(1, 0, 0, 30)
-    aimBtn.Position = UDim2.new(0, 0, 0, 44)
+    aimBtn.Size = UDim2.new(1, 0, 0, 32)
+    aimBtn.Position = UDim2.new(0, 0, 0, 46)
     aimBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
     aimBtn.Text = Lang[currentLang].btnAimOff
     aimBtn.TextColor3 = Color3.new(1, 1, 1)
-    aimBtn.Font = Enum.Font.GothamMedium
-    aimBtn.TextSize = 11
+    aimBtn.Font = Enum.Font.SourceSansSemibold
+    aimBtn.TextSize = 12
     aimBtn.Parent = mainPage
     applyCorner(aimBtn, 8)
     uiElements.aimBtn = aimBtn
@@ -339,13 +340,13 @@ if userTier == "VIP" then
     end)
 
     local stickBtn = Instance.new("TextButton")
-    stickBtn.Size = UDim2.new(1, 0, 0, 30)
-    stickBtn.Position = UDim2.new(0, 0, 0, 80)
+    stickBtn.Size = UDim2.new(1, 0, 0, 32)
+    stickBtn.Position = UDim2.new(0, 0, 0, 84)
     stickBtn.BackgroundColor3 = stickDeadTarget and Color3.fromRGB(140, 60, 20) or Color3.fromRGB(20, 20, 28)
     stickBtn.Text = stickDeadTarget and Lang[currentLang].btnStickOn or Lang[currentLang].btnStickOff
     stickBtn.TextColor3 = Color3.new(1, 1, 1)
-    stickBtn.Font = Enum.Font.GothamMedium
-    stickBtn.TextSize = 11
+    stickBtn.Font = Enum.Font.SourceSansSemibold
+    stickBtn.TextSize = 12
     stickBtn.Parent = mainPage
     applyCorner(stickBtn, 8)
     uiElements.stickBtn = stickBtn
@@ -357,13 +358,13 @@ if userTier == "VIP" then
     end)
 
     local espBtn = Instance.new("TextButton")
-    espBtn.Size = UDim2.new(1, 0, 0, 30)
-    espBtn.Position = UDim2.new(0, 0, 0, 116)
+    espBtn.Size = UDim2.new(1, 0, 0, 32)
+    espBtn.Position = UDim2.new(0, 0, 0, 122)
     espBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
     espBtn.Text = Lang[currentLang].btnEspOff
     espBtn.TextColor3 = Color3.new(1, 1, 1)
-    espBtn.Font = Enum.Font.GothamMedium
-    espBtn.TextSize = 11
+    espBtn.Font = Enum.Font.SourceSansSemibold
+    espBtn.TextSize = 12
     espBtn.Parent = mainPage
     applyCorner(espBtn, 8)
     uiElements.espBtn = espBtn
@@ -375,14 +376,14 @@ if userTier == "VIP" then
     end)
 
     local targetInput = Instance.new("TextBox")
-    targetInput.Size = UDim2.new(1, 0, 0, 32)
-    targetInput.Position = UDim2.new(0, 0, 0, 152)
+    targetInput.Size = UDim2.new(1, 0, 0, 34)
+    targetInput.Position = UDim2.new(0, 0, 0, 160)
     targetInput.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
     targetInput.PlaceholderText = Lang[currentLang].targetPlaceholder
     targetInput.Text = ""
     targetInput.TextColor3 = Color3.fromRGB(240, 240, 240)
-    targetInput.Font = Enum.Font.Gotham
-    targetInput.TextSize = 11
+    targetInput.Font = Enum.Font.SourceSans
+    targetInput.TextSize = 12
     targetInput.Parent = mainPage
     applyCorner(targetInput, 8)
     uiElements.targetInput = targetInput
@@ -401,13 +402,13 @@ if userTier == "VIP" then
     end)
 
     local switchBtn = Instance.new("TextButton")
-    switchBtn.Size = UDim2.new(0.48, 0, 0, 32)
-    switchBtn.Position = UDim2.new(0, 0, 0, 192)
+    switchBtn.Size = UDim2.new(0.48, 0, 0, 34)
+    switchBtn.Position = UDim2.new(0, 0, 0, 202)
     switchBtn.BackgroundColor3 = Color3.fromRGB(32, 32, 44)
     switchBtn.Text = Lang[currentLang].btnSwitchTarget
     switchBtn.TextColor3 = Color3.new(1, 1, 1)
-    switchBtn.Font = Enum.Font.GothamMedium
-    switchBtn.TextSize = 11
+    switchBtn.Font = Enum.Font.SourceSansSemibold
+    switchBtn.TextSize = 12
     switchBtn.Parent = mainPage
     applyCorner(switchBtn, 8)
     uiElements.switchBtn = switchBtn
@@ -436,13 +437,13 @@ if userTier == "VIP" then
     end)
 
     local hopBtn = Instance.new("TextButton")
-    hopBtn.Size = UDim2.new(0.48, 0, 0, 32)
-    hopBtn.Position = UDim2.new(0.52, 0, 0, 192)
+    hopBtn.Size = UDim2.new(0.48, 0, 0, 34)
+    hopBtn.Position = UDim2.new(0.52, 0, 0, 202)
     hopBtn.BackgroundColor3 = Color3.fromRGB(32, 32, 44)
     hopBtn.Text = Lang[currentLang].btnHop
     hopBtn.TextColor3 = Color3.new(1, 1, 1)
-    hopBtn.Font = Enum.Font.GothamMedium
-    hopBtn.TextSize = 11
+    hopBtn.Font = Enum.Font.SourceSansSemibold
+    hopBtn.TextSize = 12
     hopBtn.Parent = mainPage
     applyCorner(hopBtn, 8)
     uiElements.hopBtn = hopBtn
@@ -462,13 +463,13 @@ if userTier == "VIP" then
     local slotList = {{key = Enum.KeyCode.One, id = "slot1"}, {key = Enum.KeyCode.Two, id = "slot2"}, {key = Enum.KeyCode.Three, id = "slot3"}}
     for i, item in ipairs(slotList) do
         local sBtn = Instance.new("TextButton")
-        sBtn.Size = UDim2.new(0.31, 0, 0, 30)
+        sBtn.Size = UDim2.new(0.31, 0, 0, 32)
         sBtn.Position = UDim2.new((i - 1) * 0.345, 0, 0, 10)
         sBtn.BackgroundColor3 = SlotKeys[item.key] and Color3.fromRGB(0, 110, 180) or Color3.fromRGB(20, 20, 28)
         sBtn.Text = Lang[currentLang][item.id]
         sBtn.TextColor3 = Color3.new(1, 1, 1)
-        sBtn.Font = Enum.Font.GothamMedium
-        sBtn.TextSize = 10
+        sBtn.Font = Enum.Font.SourceSansSemibold
+        sBtn.TextSize = 11
         sBtn.Parent = skillPage
         applyCorner(sBtn, 6)
 
@@ -482,13 +483,13 @@ if userTier == "VIP" then
     for i, key in ipairs(keysList) do
         local col, row = (i - 1) % 3, math.floor((i - 1) / 3)
         local kBtn = Instance.new("TextButton")
-        kBtn.Size = UDim2.new(0.31, 0, 0, 30)
-        kBtn.Position = UDim2.new(col * 0.345, 0, 0, 52 + row * 36)
+        kBtn.Size = UDim2.new(0.31, 0, 0, 32)
+        kBtn.Position = UDim2.new(col * 0.345, 0, 0, 54 + row * 38)
         kBtn.BackgroundColor3 = SkillKeys[key] and Color3.fromRGB(35, 130, 70) or Color3.fromRGB(20, 20, 28)
         kBtn.Text = Lang[currentLang].skillBtn .. key.Name
         kBtn.TextColor3 = Color3.new(1, 1, 1)
-        kBtn.Font = Enum.Font.GothamMedium
-        kBtn.TextSize = 10
+        kBtn.Font = Enum.Font.SourceSansSemibold
+        kBtn.TextSize = 11
         kBtn.Parent = skillPage
         applyCorner(kBtn, 6)
 
@@ -536,7 +537,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ========== 完美優化縮小 2 倍的 ESP 系統 (含奢華符號裝飾) ==========
+-- ========== 完美優化縮小 2 倍的 ESP 系統 (全面採用圓潤柔和字體) ==========
 local function createESP(player)
     if espCache[player] then return end
     
@@ -558,16 +559,16 @@ local function createESP(player)
     nameText.Visible = false
     nameText.Center = true
     nameText.Outline = true
-    nameText.Font = 2
-    nameText.Size = 15 
+    nameText.Font = 3 -- 繪圖 API 的圓潤飽滿字體常數
+    nameText.Size = 16 -- 放大微調，圓潤清晰
     nameText.Color = Color3.fromRGB(255, 255, 255)
 
     local infoText = Drawing.new("Text")
     infoText.Visible = false
     infoText.Center = true
     infoText.Outline = true
-    infoText.Font = 2
-    infoText.Size = 12 
+    infoText.Font = 3
+    infoText.Size = 13 -- 圓潤副標題
     infoText.Color = Color3.fromRGB(255, 230, 100)
 
     espCache[player] = {
@@ -679,9 +680,8 @@ RunService.RenderStepped:Connect(function(deltaTime)
                 cache.HealthBar.Color = Color3.fromRGB(255 - (healthPercent * 255), healthPercent * 255, 0)
                 cache.HealthBar.Visible = true
 
-                -- ESP 名稱與血量加上奢華符號外框
                 cache.NameText.Text = "❖ " .. p.Name .. " [ " .. math.floor(hum.Health) .." HP ] ❖"
-                cache.NameText.Position = Vector2.new(vector.X, posY - 22)
+                cache.NameText.Position = Vector2.new(vector.X, posY - 23)
                 cache.NameText.Visible = true
 
                 local pLevel, pPvp = getPlayerStatusInfo(p)
