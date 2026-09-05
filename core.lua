@@ -1,4 +1,4 @@
--- King Legacy Auto Bounty + VIP/Free Key System + Multi-Language (ZH/EN) v9.0
+-- King Legacy Auto Bounty + Direct Tier System (v9.0 Clean Core)
 
 local Players = game:GetService("Players")
 local VIM = game:GetService("VirtualInputManager")
@@ -10,17 +10,14 @@ local Camera = workspace.CurrentCamera
 
 local lp = Players.LocalPlayer
 
+-- 直接從全域變數讀取身分 (由 loader 傳入，預設若無則為 VIP)
+local userTier = getgenv().USER_TIER or "VIP"
+
 -- ========== 多語言字典 (Multi-Language Dictionary) ==========
 local currentLang = "ZH"
 
 local Lang = {
     ZH = {
-        keyTitle = "🔑 卡號身份驗證 (VIP / Free)",
-        keyPlaceholder = "請輸入 VIP 或 Free 卡號...",
-        keyVerifyBtn = "驗證卡號",
-        keyStatusInit = "請輸入授權卡號驗證權限",
-        keySuccess = "✓ 驗證成功！正在載入 ",
-        keyFailed = "✕ 無效卡號，請重新輸入！",
         titleVIP = "KING LEGACY | VIP 全功能版",
         titleFree = "KING LEGACY | FREE 自瞄版",
         statusOff = "狀態：已停用",
@@ -40,12 +37,6 @@ local Lang = {
         skillBtn = "技能 "
     },
     EN = {
-        keyTitle = "🔑 Key Authentication (VIP / Free)",
-        keyPlaceholder = "Enter VIP or Free Key...",
-        keyVerifyBtn = "Verify Key",
-        keyStatusInit = "Please enter your key to verify.",
-        keySuccess = "✓ Success! Loading ",
-        keyFailed = "✕ Invalid Key, try again!",
         titleVIP = "KING LEGACY | VIP Full Version",
         titleFree = "KING LEGACY | FREE Aim Version",
         statusOff = "Status: Disabled",
@@ -66,124 +57,17 @@ local Lang = {
     }
 }
 
--- ========== 卡號與權限設定 ==========
-local KEYS_DATABASE = {
-    ["VIP-KING-8888"] = "VIP",
-    ["VIP-LEGACY-9999"] = "VIP",
-    ["FREE-AIM-2026"] = "FREE",
-    ["FREE-TRY-0000"] = "FREE",
-}
-
-local userTier = nil
-local isKeyValidated = false
-
--- ========== 驗證 GUI ==========
-local keyGui = Instance.new("ScreenGui")
-keyGui.Name = "KingLegacy_KeySystem"
-keyGui.Parent = game:GetService("CoreGui")
-
-local keyFrame = Instance.new("Frame")
-keyFrame.Size = UDim2.new(0, 320, 0, 180)
-keyFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
-keyFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
-keyFrame.Active = true
-keyFrame.Parent = keyGui
-
 local function applyCorner(p, r)
     local c = Instance.new("UICorner")
     c.CornerRadius = UDim.new(0, r or 6)
     c.Parent = p
 end
-applyCorner(keyFrame, 10)
 
-local keyTopBar = Instance.new("Frame")
-keyTopBar.Size = UDim2.new(1, 0, 0, 36)
-keyTopBar.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
-keyTopBar.Parent = keyFrame
-applyCorner(keyTopBar, 10)
-
-local keyTitle = Instance.new("TextLabel")
-keyTitle.Size = UDim2.new(1, -60, 1, 0)
-keyTitle.Position = UDim2.new(0, 12, 0, 0)
-keyTitle.BackgroundTransparency = 1
-keyTitle.Text = Lang[currentLang].keyTitle
-keyTitle.TextColor3 = Color3.fromRGB(230, 230, 240)
-keyTitle.Font = Enum.Font.GothamBold
-keyTitle.TextSize = 11
-keyTitle.TextXAlignment = Enum.TextXAlignment.Left
-keyTitle.Parent = keyTopBar
-
--- 驗證介面語言切換鈕
-local keyLangBtn = Instance.new("TextButton")
-keyLangBtn.Size = UDim2.new(0, 36, 0, 22)
-keyLangBtn.Position = UDim2.new(1, -44, 0, 7)
-keyLangBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
-keyLangBtn.Text = "EN"
-keyLangBtn.TextColor3 = Color3.new(1, 1, 1)
-keyLangBtn.Font = Enum.Font.GothamBold
-keyLangBtn.TextSize = 10
-keyLangBtn.Parent = keyTopBar
-applyCorner(keyLangBtn, 5)
-
-local keyInput = Instance.new("TextBox")
-keyInput.Size = UDim2.new(1, -30, 0, 36)
-keyInput.Position = UDim2.new(0, 15, 0, 50)
-keyInput.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
-keyInput.PlaceholderText = Lang[currentLang].keyPlaceholder
-keyInput.Text = ""
-keyInput.TextColor3 = Color3.fromRGB(240, 240, 240)
-keyInput.Font = Enum.Font.Gotham
-keyInput.TextSize = 11
-keyInput.Parent = keyFrame
-applyCorner(keyInput, 6)
-
-local verifyBtn = Instance.new("TextButton")
-verifyBtn.Size = UDim2.new(1, -30, 0, 36)
-verifyBtn.Position = UDim2.new(0, 15, 0, 96)
-verifyBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 180)
-verifyBtn.Text = Lang[currentLang].keyVerifyBtn
-verifyBtn.TextColor3 = Color3.new(1, 1, 1)
-verifyBtn.Font = Enum.Font.GothamBold
-verifyBtn.TextSize = 12
-verifyBtn.Parent = keyFrame
-applyCorner(verifyBtn, 6)
-
-local keyStatusLabel = Instance.new("TextLabel")
-keyStatusLabel.Size = UDim2.new(1, -30, 0, 20)
-keyStatusLabel.Position = UDim2.new(0, 15, 0, 142)
-keyStatusLabel.BackgroundTransparency = 1
-keyStatusLabel.Text = Lang[currentLang].keyStatusInit
-keyStatusLabel.TextColor3 = Color3.fromRGB(160, 160, 175)
-keyStatusLabel.Font = Enum.Font.Gotham
-keyStatusLabel.TextSize = 10
-keyStatusLabel.Parent = keyFrame
-
-keyLangBtn.Activated:Connect(function()
-    currentLang = currentLang == "ZH" and "EN" or "ZH"
-    keyLangBtn.Text = currentLang == "ZH" and "EN" or "中文"
-    keyTitle.Text = Lang[currentLang].keyTitle
-    keyInput.PlaceholderText = Lang[currentLang].keyPlaceholder
-    verifyBtn.Text = Lang[currentLang].keyVerifyBtn
-    keyStatusLabel.Text = Lang[currentLang].keyStatusInit
-end)
-
-verifyBtn.Activated:Connect(function()
-    local inputKey = keyInput.Text:gsub("%s+", "")
-    local tier = KEYS_DATABASE[inputKey]
-    if tier then
-        userTier = tier
-        keyStatusLabel.Text = Lang[currentLang].keySuccess .. tier .. "..."
-        keyStatusLabel.TextColor3 = Color3.fromRGB(0, 220, 130)
-        task.wait(0.8)
-        isKeyValidated = true
-        keyGui:Destroy()
-    else
-        keyStatusLabel.Text = Lang[currentLang].keyFailed
-        keyStatusLabel.TextColor3 = Color3.fromRGB(230, 60, 70)
-    end
-end)
-
-repeat task.wait(0.2) until isKeyValidated
+local function bindResponsiveClick(button, callback)
+    button.Activated:Connect(callback)
+    button.MouseEnter:Connect(function() button.BackgroundTransparency = 0.15 end)
+    button.MouseLeave:Connect(function() button.BackgroundTransparency = 0 end)
+end
 
 -- ========== [主程式 UI 與功能] ==========
 
@@ -205,12 +89,6 @@ local SkillKeys = {
 local SlotKeys = {
     [Enum.KeyCode.One] = true, [Enum.KeyCode.Two] = true, [Enum.KeyCode.Three] = true
 }
-
-local function bindResponsiveClick(button, callback)
-    button.Activated:Connect(callback)
-    button.MouseEnter:Connect(function() button.BackgroundTransparency = 0.15 end)
-    button.MouseLeave:Connect(function() button.BackgroundTransparency = 0 end)
-end
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "KingLegacy_BountyHub_v90"
@@ -270,7 +148,6 @@ bindResponsiveClick(closeBtn, function()
     gui:Destroy()
 end)
 
--- UI 文字更新控制
 local uiElements = {}
 
 local function updateLanguage()
