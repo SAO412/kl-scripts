@@ -1,4 +1,4 @@
--- King Legacy Auto Bounty + Direct Tier System (v9.1 Optimized ESP Core)
+-- King Legacy Auto Bounty + Direct Tier System (v9.2.1 Larger ESP Core)
 
 local Players = game:GetService("Players")
 local VIM = game:GetService("VirtualInputManager")
@@ -97,7 +97,7 @@ local SlotKeys = {
 }
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "KingLegacy_BountyHub_v91"
+gui.Name = "KingLegacy_BountyHub_v921"
 gui.Parent = game:GetService("CoreGui")
 
 local mainFrame = Instance.new("Frame")
@@ -351,7 +351,7 @@ if userTier == "VIP" then
         stickBtn.Text = stickDeadTarget and Lang[currentLang].btnStickOn or Lang[currentLang].btnStickOff
     end)
 
-    -- 升級版 ESP 按鈕
+    -- ESP 按鈕
     local espBtn = Instance.new("TextButton")
     espBtn.Size = UDim2.new(1, 0, 0, 28)
     espBtn.Position = UDim2.new(0, 0, 0, 108)
@@ -383,6 +383,19 @@ if userTier == "VIP" then
     applyCorner(targetInput, 6)
     uiElements.targetInput = targetInput
 
+    targetInput.FocusLost:Connect(function(enterPressed)
+        if targetInput.Text ~= "" then
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= lp and string.lower(p.Name):sub(1, #targetInput.Text) == string.lower(targetInput.Text) then
+                    manualTarget = p
+                    break
+                end
+            end
+        else
+            manualTarget = nil
+        end
+    end)
+
     local switchBtn = Instance.new("TextButton")
     switchBtn.Size = UDim2.new(0.48, 0, 0, 30)
     switchBtn.Position = UDim2.new(0, 0, 0, 178)
@@ -394,6 +407,29 @@ if userTier == "VIP" then
     switchBtn.Parent = mainPage
     applyCorner(switchBtn, 6)
     uiElements.switchBtn = switchBtn
+
+    bindResponsiveClick(switchBtn, function()
+        local list = {}
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local hum = p.Character:FindFirstChildOfClass("Humanoid")
+                if hum and hum.Health > 0 then table.insert(list, p) end
+            end
+        end
+        if #list > 0 then
+            local currentIdx = 1
+            for i, p in ipairs(list) do
+                if p == currentTarget or p == manualTarget then
+                    currentIdx = i + 1
+                    break
+                end
+            end
+            if currentIdx > #list then currentIdx = 1 end
+            manualTarget = list[currentIdx]
+            currentTarget = list[currentIdx]
+            targetInput.Text = manualTarget.Name
+        end
+    end)
 
     local hopBtn = Instance.new("TextButton")
     hopBtn.Size = UDim2.new(0.48, 0, 0, 30)
@@ -407,7 +443,18 @@ if userTier == "VIP" then
     applyCorner(hopBtn, 6)
     uiElements.hopBtn = hopBtn
 
-    -- 欄位與技能列表
+    bindResponsiveClick(hopBtn, function()
+        local success, err = pcall(function()
+            local servers = Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+            for _, s in ipairs(servers.data) do
+                if s.playing < s.maxPlayers and s.id ~= game.JobId then
+                    TPS:TeleportToPlaceInstance(game.PlaceId, s.id, lp)
+                    break
+                end
+            end
+        end)
+    end)
+
     local slotList = {{key = Enum.KeyCode.One, id = "slot1"}, {key = Enum.KeyCode.Two, id = "slot2"}, {key = Enum.KeyCode.Three, id = "slot3"}}
     for i, item in ipairs(slotList) do
         local sBtn = Instance.new("TextButton")
@@ -485,22 +532,22 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ========== 頂級優化 ESP 系統初始化 ==========
+-- ========== 放大版 ESP 系統初始化 ==========
 local function createESP(player)
     if espCache[player] then return end
     
     local box = Drawing.new("Square")
     box.Visible = false
-    box.Thickness = 1.5
+    box.Thickness = 2.5 -- 加粗方框邊線
     box.Filled = false
 
     local healthBar = Drawing.new("Line")
     healthBar.Visible = false
-    healthBar.Thickness = 3
+    healthBar.Thickness = 5 -- 加粗血量條
 
     local healthBarBg = Drawing.new("Line")
     healthBarBg.Visible = false
-    healthBarBg.Thickness = 3
+    healthBarBg.Thickness = 5
     healthBarBg.Color = Color3.fromRGB(30, 30, 30)
 
     local nameText = Drawing.new("Text")
@@ -508,7 +555,7 @@ local function createESP(player)
     nameText.Center = true
     nameText.Outline = true
     nameText.Font = 2
-    nameText.Size = 13
+    nameText.Size = 24 -- 放大字體至 24 級
     nameText.Color = Color3.fromRGB(255, 255, 255)
 
     espCache[player] = {
@@ -557,7 +604,7 @@ local function getClosestPlayer()
 end
 
 RunService.RenderStepped:Connect(function(deltaTime)
-    -- 1. 處理高階優化 ESP 渲染 (方框、血量條、名稱)
+    -- 1. 處理放大版 ESP 渲染 (方框、血量條、名稱)
     for p, cache in pairs(espCache) do
         local char = p.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -566,13 +613,13 @@ RunService.RenderStepped:Connect(function(deltaTime)
         if espEnabled and hrp and hum and hum.Health > 0 then
             local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
             if onScreen then
-                local size = math.clamp(2500 / vector.Z, 15, 300)
-                local width = size * 0.6
+                -- 將尺寸乘數放大 2.5 倍
+                local size = math.clamp(5500 / vector.Z, 35, 600)
+                local width = size * 0.7
                 local height = size
                 local posX = vector.X - width / 2
                 local posY = vector.Y - height / 2
 
-                -- 隊友顏色判定
                 local teamColor = (p.Team and lp.Team and p.Team == lp.Team) and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 50, 50)
 
                 -- 方框更新
@@ -581,22 +628,22 @@ RunService.RenderStepped:Connect(function(deltaTime)
                 cache.Box.Color = teamColor
                 cache.Box.Visible = true
 
-                -- 血量條背景與動態血量計算
+                -- 血量條更新 (加大距離與粗細)
                 local healthPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
                 local barHeight = height * healthPercent
                 
-                cache.HealthBarBg.From = Vector2.new(posX - 6, posY + height)
-                cache.HealthBarBg.To = Vector2.new(posX - 6, posY)
+                cache.HealthBarBg.From = Vector2.new(posX - 10, posY + height)
+                cache.HealthBarBg.To = Vector2.new(posX - 10, posY)
                 cache.HealthBarBg.Visible = true
 
-                cache.HealthBar.From = Vector2.new(posX - 6, posY + height)
-                cache.HealthBar.To = Vector2.new(posX - 6, posY + (height - barHeight))
+                cache.HealthBar.From = Vector2.new(posX - 10, posY + height)
+                cache.HealthBar.To = Vector2.new(posX - 10, posY + (height - barHeight))
                 cache.HealthBar.Color = Color3.fromRGB(255 - (healthPercent * 255), healthPercent * 255, 0)
                 cache.HealthBar.Visible = true
 
-                -- 玩家名稱更新
+                -- 玩家名稱更新 (位置上移更多避免重疊)
                 cache.NameText.Text = p.Name .. " [" .. math.floor(hum.Health) .. "]"
-                cache.NameText.Position = Vector2.new(vector.X, posY - 18)
+                cache.NameText.Position = Vector2.new(vector.X, posY - 28)
                 cache.NameText.Visible = true
             else
                 cache.Box.Visible = false
@@ -615,8 +662,14 @@ RunService.RenderStepped:Connect(function(deltaTime)
     if isTeleporting then return end
 
     local targetToLock = nil
-    if autoEnabled and userTier == "VIP" then targetToLock = currentTarget
-    elseif standaloneAimEnabled then targetToLock = manualTarget or getClosestPlayer() end
+    if autoEnabled and userTier == "VIP" then
+        if not currentTarget or not currentTarget.Character or currentTarget.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then
+            currentTarget = manualTarget or getClosestPlayer()
+        end
+        targetToLock = currentTarget
+    elseif standaloneAimEnabled then
+        targetToLock = manualTarget or getClosestPlayer()
+    end
 
     if not targetToLock then return end
 
