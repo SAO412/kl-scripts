@@ -1,4 +1,4 @@
--- King Legacy Auto Bounty + Direct Tier System (v9.0 Clean Core with ESP & Spectate)
+-- King Legacy Auto Bounty + Direct Tier System (v9.1 Optimized ESP Core)
 
 local Players = game:GetService("Players")
 local VIM = game:GetService("VirtualInputManager")
@@ -30,10 +30,8 @@ local Lang = {
         btnAimOn = "🌐 360°全方位技能追蹤/自瞄: ON",
         btnStickOff = "極限吸附跟隨: OFF",
         btnStickOn = "極限吸附跟隨: ON",
-        btnEspOff = "👁️ 玩家方框透視 (ESP): OFF",
-        btnEspOn = "👁️ 玩家方框透視 (ESP): ON",
-        btnSpecOff = "🎥 觀看目標視角: OFF",
-        btnSpecOn = "🎥 觀看目標視角: ON",
+        btnEspOff = "👁️ 頂級玩家透視 (ESP): OFF",
+        btnEspOn = "👁️ 頂級玩家透視 (ESP): ON",
         targetPlaceholder = "🔍 輸入指定玩家 (留空自動鎖定)...",
         btnSwitchTarget = "👤 切換下個目標",
         btnHop = "🌐 自動伺服器 Hop",
@@ -53,10 +51,8 @@ local Lang = {
         btnAimOn = "🌐 360° Skill Aimlock: ON",
         btnStickOff = "Target Lock Magnet: OFF",
         btnStickOn = "Target Lock Magnet: ON",
-        btnEspOff = "👁️ Player ESP: OFF",
-        btnEspOn = "👁️ Player ESP: ON",
-        btnSpecOff = "🎥 Spectate Target: OFF",
-        btnSpecOn = "🎥 Spectate Target: ON",
+        btnEspOff = "👁️ Pro Player ESP: OFF",
+        btnEspOn = "👁️ Pro Player ESP: ON",
         targetPlaceholder = "🔍 Enter Player Name (Blank = Nearest)...",
         btnSwitchTarget = "👤 Switch Target",
         btnHop = "🌐 Server Hop",
@@ -84,11 +80,10 @@ local autoEnabled = false
 local stickDeadTarget = true    
 local standaloneAimEnabled = false 
 local espEnabled = false
-local spectateEnabled = false
 local manualTarget             
 local isTeleporting = false    
 local currentTarget = nil       
-local espBoxes = {}
+local espCache = {}
 
 local SkillKeys = {
     [Enum.KeyCode.Q] = true, [Enum.KeyCode.Z] = true,
@@ -102,12 +97,12 @@ local SlotKeys = {
 }
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "KingLegacy_BountyHub_v90"
+gui.Name = "KingLegacy_BountyHub_v91"
 gui.Parent = game:GetService("CoreGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 320, 0, userTier == "VIP" and 480 or 100) -- 高度適應新增按鈕
-mainFrame.Position = UDim2.new(0, 30, 0.5, userTier == "VIP" and -240 or -50)
+mainFrame.Size = UDim2.new(0, 320, 0, userTier == "VIP" and 450 or 100)
+mainFrame.Position = UDim2.new(0, 30, 0.5, userTier == "VIP" and -225 or -50)
 mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 mainFrame.Active = true
 mainFrame.Parent = gui
@@ -157,8 +152,9 @@ bindResponsiveClick(closeBtn, function()
     autoEnabled = false
     standaloneAimEnabled = false
     espEnabled = false
-    spectateEnabled = false
-    for _, box in pairs(espBoxes) do box:Remove() end
+    for _, cache in pairs(espCache) do
+        for _, obj in pairs(cache) do obj:Remove() end
+    end
     gui:Destroy()
 end)
 
@@ -189,9 +185,6 @@ local function updateLanguage()
         end
         if uiElements.espBtn then
             uiElements.espBtn.Text = espEnabled and Lang[currentLang].btnEspOn or Lang[currentLang].btnEspOff
-        end
-        if uiElements.specBtn then
-            uiElements.specBtn.Text = spectateEnabled and Lang[currentLang].btnSpecOn or Lang[currentLang].btnSpecOff
         end
         if uiElements.targetInput then uiElements.targetInput.PlaceholderText = Lang[currentLang].targetPlaceholder end
         if uiElements.switchBtn then uiElements.switchBtn.Text = Lang[currentLang].btnSwitchTarget end
@@ -283,7 +276,7 @@ if userTier == "VIP" then
     uiElements.skillTabBtn = skillTabBtn
 
     local pageContainer = Instance.new("Frame")
-    pageContainer.Size = UDim2.new(1, -20, 0, 360)
+    pageContainer.Size = UDim2.new(1, -20, 0, 330)
     pageContainer.Position = UDim2.new(0, 10, 0, 110)
     pageContainer.BackgroundTransparency = 1
     pageContainer.Parent = mainFrame
@@ -358,7 +351,7 @@ if userTier == "VIP" then
         stickBtn.Text = stickDeadTarget and Lang[currentLang].btnStickOn or Lang[currentLang].btnStickOff
     end)
 
-    -- 新增 ESP 按鈕
+    -- 升級版 ESP 按鈕
     local espBtn = Instance.new("TextButton")
     espBtn.Size = UDim2.new(1, 0, 0, 28)
     espBtn.Position = UDim2.new(0, 0, 0, 108)
@@ -377,28 +370,9 @@ if userTier == "VIP" then
         espBtn.Text = espEnabled and Lang[currentLang].btnEspOn or Lang[currentLang].btnEspOff
     end)
 
-    -- 新增 Spectate 觀看視角按鈕
-    local specBtn = Instance.new("TextButton")
-    specBtn.Size = UDim2.new(1, 0, 0, 28)
-    specBtn.Position = UDim2.new(0, 0, 0, 142)
-    specBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
-    specBtn.Text = Lang[currentLang].btnSpecOff
-    specBtn.TextColor3 = Color3.new(1, 1, 1)
-    specBtn.Font = Enum.Font.GothamMedium
-    specBtn.TextSize = 11
-    specBtn.Parent = mainPage
-    applyCorner(specBtn, 6)
-    uiElements.specBtn = specBtn
-
-    bindResponsiveClick(specBtn, function()
-        spectateEnabled = not spectateEnabled
-        specBtn.BackgroundColor3 = spectateEnabled and Color3.fromRGB(50, 130, 180) or Color3.fromRGB(28, 28, 36)
-        specBtn.Text = spectateEnabled and Lang[currentLang].btnSpecOn or Lang[currentLang].btnSpecOff
-    end)
-
     local targetInput = Instance.new("TextBox")
     targetInput.Size = UDim2.new(1, 0, 0, 30)
-    targetInput.Position = UDim2.new(0, 0, 0, 176)
+    targetInput.Position = UDim2.new(0, 0, 0, 142)
     targetInput.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
     targetInput.PlaceholderText = Lang[currentLang].targetPlaceholder
     targetInput.Text = ""
@@ -411,7 +385,7 @@ if userTier == "VIP" then
 
     local switchBtn = Instance.new("TextButton")
     switchBtn.Size = UDim2.new(0.48, 0, 0, 30)
-    switchBtn.Position = UDim2.new(0, 0, 0, 212)
+    switchBtn.Position = UDim2.new(0, 0, 0, 178)
     switchBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
     switchBtn.Text = Lang[currentLang].btnSwitchTarget
     switchBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -423,7 +397,7 @@ if userTier == "VIP" then
 
     local hopBtn = Instance.new("TextButton")
     hopBtn.Size = UDim2.new(0.48, 0, 0, 30)
-    hopBtn.Position = UDim2.new(0.52, 0, 0, 212)
+    hopBtn.Position = UDim2.new(0.52, 0, 0, 178)
     hopBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
     hopBtn.Text = Lang[currentLang].btnHop
     hopBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -511,21 +485,46 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ========== ESP 繪製初始化 ==========
+-- ========== 頂級優化 ESP 系統初始化 ==========
 local function createESP(player)
-    if espBoxes[player] then return end
+    if espCache[player] then return end
+    
     local box = Drawing.new("Square")
     box.Visible = false
-    box.Color = Color3.fromRGB(255, 0, 0)
     box.Thickness = 1.5
     box.Filled = false
-    espBoxes[player] = box
+
+    local healthBar = Drawing.new("Line")
+    healthBar.Visible = false
+    healthBar.Thickness = 3
+
+    local healthBarBg = Drawing.new("Line")
+    healthBarBg.Visible = false
+    healthBarBg.Thickness = 3
+    healthBarBg.Color = Color3.fromRGB(30, 30, 30)
+
+    local nameText = Drawing.new("Text")
+    nameText.Visible = false
+    nameText.Center = true
+    nameText.Outline = true
+    nameText.Font = 2
+    nameText.Size = 13
+    nameText.Color = Color3.fromRGB(255, 255, 255)
+
+    espCache[player] = {
+        Box = box,
+        HealthBar = healthBar,
+        HealthBarBg = healthBarBg,
+        NameText = nameText
+    }
 end
 
 local function removeESP(player)
-    if espBoxes[player] then
-        espBoxes[player]:Remove()
-        espBoxes[player] = nil
+    if espCache[player] then
+        for _, obj in pairs(espCache[player]) do
+            obj:Remove()
+        end
+        espCache[player] = nil
     end
 end
 
@@ -535,7 +534,7 @@ end
 Players.PlayerAdded:Connect(createESP)
 Players.PlayerRemoving:Connect(removeESP)
 
--- ========== 核心 360° 自瞄、ESP 與 觀看視角 總迴圈 ==========
+-- ========== 核心 360° 自瞄與 ESP 總迴圈 ==========
 local function getClosestPlayer()
     local myChar = lp.Character
     local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
@@ -558,8 +557,8 @@ local function getClosestPlayer()
 end
 
 RunService.RenderStepped:Connect(function(deltaTime)
-    -- 1. 處理 ESP 方框更新
-    for p, box in pairs(espBoxes) do
+    -- 1. 處理高階優化 ESP 渲染 (方框、血量條、名稱)
+    for p, cache in pairs(espCache) do
         local char = p.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -568,28 +567,48 @@ RunService.RenderStepped:Connect(function(deltaTime)
             local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
             if onScreen then
                 local size = math.clamp(2500 / vector.Z, 15, 300)
-                box.Size = Vector2.new(size * 0.6, size)
-                box.Position = Vector2.new(vector.X - box.Size.X / 2, vector.Y - box.Size.Y / 2)
-                box.Color = (p.Team and lp.Team and p.Team == lp.Team) and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 50, 50)
-                box.Visible = true
+                local width = size * 0.6
+                local height = size
+                local posX = vector.X - width / 2
+                local posY = vector.Y - height / 2
+
+                -- 隊友顏色判定
+                local teamColor = (p.Team and lp.Team and p.Team == lp.Team) and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 50, 50)
+
+                -- 方框更新
+                cache.Box.Size = Vector2.new(width, height)
+                cache.Box.Position = Vector2.new(posX, posY)
+                cache.Box.Color = teamColor
+                cache.Box.Visible = true
+
+                -- 血量條背景與動態血量計算
+                local healthPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+                local barHeight = height * healthPercent
+                
+                cache.HealthBarBg.From = Vector2.new(posX - 6, posY + height)
+                cache.HealthBarBg.To = Vector2.new(posX - 6, posY)
+                cache.HealthBarBg.Visible = true
+
+                cache.HealthBar.From = Vector2.new(posX - 6, posY + height)
+                cache.HealthBar.To = Vector2.new(posX - 6, posY + (height - barHeight))
+                cache.HealthBar.Color = Color3.fromRGB(255 - (healthPercent * 255), healthPercent * 255, 0)
+                cache.HealthBar.Visible = true
+
+                -- 玩家名稱更新
+                cache.NameText.Text = p.Name .. " [" .. math.floor(hum.Health) .. "]"
+                cache.NameText.Position = Vector2.new(vector.X, posY - 18)
+                cache.NameText.Visible = true
             else
-                box.Visible = false
+                cache.Box.Visible = false
+                cache.HealthBar.Visible = false
+                cache.HealthBarBg.Visible = false
+                cache.NameText.Visible = false
             end
         else
-            box.Visible = false
-        end
-    end
-
-    -- 2. 處理觀看其他玩家視角 (Spectate)
-    if spectateEnabled and currentTarget and currentTarget.Character then
-        local tHum = currentTarget.Character:FindFirstChildOfClass("Humanoid")
-        if tHum then
-            Camera.CameraSubject = tHum
-        end
-    else
-        if lp.Character then
-            local myHum = lp.Character:FindFirstChildOfClass("Humanoid")
-            if myHum then Camera.CameraSubject = myHum end
+            cache.Box.Visible = false
+            cache.HealthBar.Visible = false
+            cache.HealthBarBg.Visible = false
+            cache.NameText.Visible = false
         end
     end
 
