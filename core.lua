@@ -1,4 +1,4 @@
--- King Legacy Auto Bounty + Direct Tier System (v9.4 Luxury ESP & UI Core)
+-- King Legacy Auto Bounty + Direct Tier System (v9.5 Ultimate Luxury UI & ESP Core)
 
 local Players = game:GetService("Players")
 local VIM = game:GetService("VirtualInputManager")
@@ -11,51 +11,51 @@ local Camera = workspace.CurrentCamera
 local lp = Players.LocalPlayer
 local userTier = getgenv().USER_TIER or "VIP"
 
--- ========== 多語言字典 (Luxury Multi-Language Dictionary) ==========
+-- ========== 多語言字典 (含奢華符號點綴) ==========
 local currentLang = "ZH"
 
 local Lang = {
     ZH = {
-        titleVIP = "💎 KING LEGACY | 奢華VIP版",
-        titleFree = "💎 KING LEGACY | 奢華FREE版",
-        statusOff = "狀態：系統待命中",
-        statusOn = "狀態：極速掛機中...",
-        tabMain = "核心控制",
-        tabSkill = "技能配置",
-        btnAutoStart = "▶ 啟動自動刷賞金",
-        btnAutoStop = "⏸ 停止自動刷賞金",
-        btnAimOff = "🌐 360°全方位自瞄追蹤: 關閉",
-        btnAimOn = "🌐 360°全方位自瞄追蹤: 開啟",
-        btnStickOff = "極限目標吸附: 關閉",
-        btnStickOn = "極限目標吸附: 開啟",
-        btnEspOff = "👁️ 頂級精準透視 (ESP): 關閉",
-        btnEspOn = "👁️ 頂級精準透視 (ESP): 開啟",
-        targetPlaceholder = "🔍 輸入目標玩家 (留空自動鎖定)...",
-        btnSwitchTarget = "👤 切換下個目標",
-        btnHop = "🌐 智慧伺服器切換",
-        slot1 = "[ 1 ] 欄位", slot2 = "[ 2 ] 欄位", slot3 = "[ 3 ] 欄位",
-        skillBtn = "技能 "
+        titleVIP = "⚜ 👑 KING LEGACY | 頂級奢華 VIP 核心 👑 ⚜",
+        titleFree = "✦ ⚡ KING LEGACY | 輕量奢華 FREE 版 ⚡ ✦",
+        statusOff = "❖ 狀態：系統安全待命中 ✦",
+        statusOn = "⚡ 狀態：極速自動掛機掠奪中... ⚜",
+        tabMain = "❖ 核心控制面板",
+        tabSkill = "⚡ 戰鬥技能配置",
+        btnAutoStart = "▶ 啟動自動刷賞金系統",
+        btnAutoStop = "⏸ 暫停自動刷賞金系統",
+        btnAimOff = "🌐 360° 全方位自瞄追蹤 ➔ [ 關閉 ]",
+        btnAimOn = "🌐 360° 全方位自瞄追蹤 ➔ [ 開啟 ⚡ ]",
+        btnStickOff = "🔒 極限目標吸附跟隨 ➔ [ 關閉 ]",
+        btnStickOn = "🔒 極限目標吸附跟隨 ➔ [ 開啟 ⚜ ]",
+        btnEspOff = "👁️ 頂級精準玩家透視 (ESP) ➔ [ 關閉 ]",
+        btnEspOn = "👁️ 頂級精準玩家透視 (ESP) ➔ [ 開啟 ✦ ]",
+        targetPlaceholder = "🔍 請輸入鎖定玩家名稱 (留空自動尋敵)...",
+        btnSwitchTarget = "👤 輪替切換下個目標",
+        btnHop = "🌐 智慧伺服器跨頻切換",
+        slot1 = "⭐ [ 1 ] 武器欄位", slot2 = "⭐ [ 2 ] 武器欄位", slot3 = "⭐ [ 3 ] 武器欄位",
+        skillBtn = "⚜ 技能 "
     },
     EN = {
-        titleVIP = "💎 KING LEGACY | LUXURY VIP",
-        titleFree = "💎 KING LEGACY | LUXURY FREE",
-        statusOff = "Status: Standby",
-        statusOn = "Status: Executing...",
-        tabMain = "Main Control",
-        tabSkill = "Skill Config",
+        titleVIP = "⚜ 👑 KING LEGACY | ULTIMATE VIP CORE 👑 ⚜",
+        titleFree = "✦ ⚡ KING LEGACY | LUXURY FREE ⚡ ✦",
+        statusOff = "❖ Status: Standby & Secure ✦",
+        statusOn = "⚡ Status: Auto Bounty Executing... ⚜",
+        tabMain = "❖ Main Control",
+        tabSkill = "⚡ Skill Config",
         btnAutoStart = "▶ Start Auto Bounty",
         btnAutoStop = "⏸ Stop Auto Bounty",
-        btnAimOff = "🌐 360° Skill Aimlock: OFF",
-        btnAimOn = "🌐 360° Skill Aimlock: ON",
-        btnStickOff = "Target Lock Magnet: OFF",
-        btnStickOn = "Target Lock Magnet: ON",
-        btnEspOff = "👁️ Pro Player ESP: OFF",
-        btnEspOn = "👁️ Pro Player ESP: ON",
+        btnAimOff = "🌐 360° Skill Aimlock ➔ [ OFF ]",
+        btnAimOn = "🌐 360° Skill Aimlock ➔ [ ON ⚡ ]",
+        btnStickOff = "🔒 Target Lock Magnet ➔ [ OFF ]",
+        btnStickOn = "🔒 Target Lock Magnet ➔ [ ON ⚜ ]",
+        btnEspOff = "👁️ Pro Player ESP ➔ [ OFF ]",
+        btnEspOn = "👁️ Pro Player ESP ➔ [ ON ✦ ]",
         targetPlaceholder = "🔍 Enter Player Name (Blank = Nearest)...",
         btnSwitchTarget = "👤 Switch Target",
         btnHop = "🌐 Smart Server Hop",
-        slot1 = "[ 1 ] Slot", slot2 = "[ 2 ] Slot", slot3 = "[ 3 ] Slot",
-        skillBtn = "Skill "
+        slot1 = "⭐ [ 1 ] Slot", slot2 = "⭐ [ 2 ] Slot", slot3 = "⭐ [ 3 ] Slot",
+        skillBtn = "⚜ Skill "
     }
 }
 
@@ -63,15 +63,6 @@ local function applyCorner(p, r)
     local c = Instance.new("UICorner")
     c.CornerRadius = UDim.new(0, r or 8)
     c.Parent = p
-end
-
-local function applyGradient(p)
-    local g = Instance.new("UIGradient")
-    g.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(210, 210, 210))
-    })
-    g.Parent = p
 end
 
 local function bindResponsiveClick(button, callback)
@@ -105,12 +96,12 @@ local SlotKeys = {
 
 -- 奢華主介面
 local gui = Instance.new("ScreenGui")
-gui.Name = "KingLegacy_LuxuryHub_v94"
+gui.Name = "KingLegacy_LuxuryHub_v95"
 gui.Parent = game:GetService("CoreGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 340, 0, userTier == "VIP" and 470 or 110)
-mainFrame.Position = UDim2.new(0, 40, 0.5, userTier == "VIP" and -235 or -55)
+mainFrame.Size = UDim2.new(0, 350, 0, userTier == "VIP" and 480 or 115)
+mainFrame.Position = UDim2.new(0, 40, 0.5, userTier == "VIP" and -240 or -57)
 mainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
 mainFrame.Active = true
 mainFrame.Parent = gui
@@ -118,9 +109,9 @@ applyCorner(mainFrame, 12)
 
 -- 質感邊框金線
 local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(212, 175, 55) -- 金色高貴邊框
+stroke.Color = Color3.fromRGB(212, 175, 55) 
 stroke.Thickness = 1.5
-stroke.Transparency = 0.4
+stroke.Transparency = 0.3
 stroke.Parent = mainFrame
 
 local topBar = Instance.new("Frame")
@@ -136,7 +127,7 @@ titleLabel.BackgroundTransparency = 1
 titleLabel.Text = userTier == "VIP" and Lang[currentLang].titleVIP or Lang[currentLang].titleFree
 titleLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
 titleLabel.Font = Enum.Font.GothamBold
-titleLabel.TextSize = 12
+titleLabel.TextSize = 11
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = topBar
 
@@ -214,7 +205,7 @@ end)
 -- FREE 介面
 if userTier == "FREE" then
     local aimBtn = Instance.new("TextButton")
-    aimBtn.Size = UDim2.new(1, -24, 0, 42)
+    aimBtn.Size = UDim2.new(1, -24, 0, 44)
     aimBtn.Position = UDim2.new(0, 12, 0, 52)
     aimBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
     aimBtn.Text = Lang[currentLang].btnAimOff
@@ -290,7 +281,7 @@ if userTier == "VIP" then
     uiElements.skillTabBtn = skillTabBtn
 
     local pageContainer = Instance.new("Frame")
-    pageContainer.Size = UDim2.new(1, -24, 0, 330)
+    pageContainer.Size = UDim2.new(1, -24, 0, 335)
     pageContainer.Position = UDim2.new(0, 12, 0, 124)
     pageContainer.BackgroundTransparency = 1
     pageContainer.Parent = mainFrame
@@ -545,13 +536,13 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ========== 完美優化縮小 2 倍的 ESP 系統 (含精緻字體優化) ==========
+-- ========== 完美優化縮小 2 倍的 ESP 系統 (含奢華符號裝飾) ==========
 local function createESP(player)
     if espCache[player] then return end
     
     local box = Drawing.new("Square")
     box.Visible = false
-    box.Thickness = 1.5 -- 俐落細緻的方框
+    box.Thickness = 1.5 
     box.Filled = false
 
     local healthBar = Drawing.new("Line")
@@ -568,7 +559,7 @@ local function createESP(player)
     nameText.Center = true
     nameText.Outline = true
     nameText.Font = 2
-    nameText.Size = 15 -- 黃金比例優化字體
+    nameText.Size = 15 
     nameText.Color = Color3.fromRGB(255, 255, 255)
 
     local infoText = Drawing.new("Text")
@@ -576,7 +567,7 @@ local function createESP(player)
     infoText.Center = true
     infoText.Outline = true
     infoText.Font = 2
-    infoText.Size = 12 -- 精緻副標題字體
+    infoText.Size = 12 
     infoText.Color = Color3.fromRGB(255, 230, 100)
 
     espCache[player] = {
@@ -605,7 +596,7 @@ Players.PlayerRemoving:Connect(removeESP)
 
 local function getPlayerStatusInfo(player)
     local level = "LV.?"
-    local pvpStatus = "⚔️ PVP: OFF"
+    local pvpStatus = "⚔️ PVP: ✕"
 
     local ls = player:FindFirstChild("leaderstats")
     if ls then
@@ -624,9 +615,9 @@ local function getPlayerStatusInfo(player)
     local char = player.Character
     if char then
         if char:GetAttribute("PVP") == true or char:FindFirstChild("PVP") and char.PVP.Value == true then
-            pvpStatus = "⚔️ PVP: ON"
+            pvpStatus = "⚔️ PVP: ✓"
         elseif player:GetAttribute("PVP") == true then
-            pvpStatus = "⚔️ PVP: ON"
+            pvpStatus = "⚔️ PVP: ✓"
         end
     end
 
@@ -663,7 +654,6 @@ RunService.RenderStepped:Connect(function(deltaTime)
         if espEnabled and hrp and hum and hum.Health > 0 then
             local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
             if onScreen then
-                -- 縮小 2 倍的精準比例計算
                 local size = math.clamp(5500 / vector.Z, 35, 600)
                 local width = size * 0.65
                 local height = size
@@ -689,12 +679,13 @@ RunService.RenderStepped:Connect(function(deltaTime)
                 cache.HealthBar.Color = Color3.fromRGB(255 - (healthPercent * 255), healthPercent * 255, 0)
                 cache.HealthBar.Visible = true
 
-                cache.NameText.Text = p.Name .. " [" .. math.floor(hum.Health) .. "]"
+                -- ESP 名稱與血量加上奢華符號外框
+                cache.NameText.Text = "❖ " .. p.Name .. " [ " .. math.floor(hum.Health) .." HP ] ❖"
                 cache.NameText.Position = Vector2.new(vector.X, posY - 22)
                 cache.NameText.Visible = true
 
                 local pLevel, pPvp = getPlayerStatusInfo(p)
-                cache.InfoText.Text = pLevel .. " | " .. pPvp
+                cache.InfoText.Text = "⚜ " .. pLevel .. " ✦ " .. pPvp .. " ⚜"
                 cache.InfoText.Position = Vector2.new(vector.X, posY + height + 3)
                 cache.InfoText.Visible = true
             else
