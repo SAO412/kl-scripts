@@ -1,4 +1,4 @@
--- King Legacy Auto Bounty + Direct Tier System (v10.0 Fully Rounded Box & Font ESP Core)
+-- King Legacy Auto Bounty + Direct Tier System (v10.2 Ultimate Symbol Edition)
 
 local Players = game:GetService("Players")
 local VIM = game:GetService("VirtualInputManager")
@@ -11,7 +11,7 @@ local Camera = workspace.CurrentCamera
 local lp = Players.LocalPlayer
 local userTier = getgenv().USER_TIER or "VIP"
 
--- ========== 多語言字典 ==========
+-- ========== 多語言字典 (全面配備精緻符號) ==========
 local currentLang = "ZH"
 
 local Lang = {
@@ -22,19 +22,19 @@ local Lang = {
         statusOn = "⚡ 狀態：極速自動掛機掠奪中... ⚜",
         tabMain = "❖ 核心控制面板",
         tabSkill = "⚡ 戰鬥技能配置",
-        btnAutoStart = "▶ 啟動自動刷賞金系統",
-        btnAutoStop = "⏸ 暫停自動刷賞金系統",
-        btnAimOff = "🌐 360° 全方位自瞄追蹤 ➔ [ 關閉 ]",
+        btnAutoStart = "▶ 啟動自動刷賞金系統 🚀",
+        btnAutoStop = "⏸ 暫停自動刷賞金系統 🛑",
+        btnAimOff = "🌐 360° 全方位自瞄追蹤 ➔ [ 關閉 ✕ ]",
         btnAimOn = "🌐 360° 全方位自瞄追蹤 ➔ [ 開啟 ⚡ ]",
-        btnStickOff = "🔒 極限目標吸附跟隨 ➔ [ 關閉 ]",
+        btnStickOff = "🔒 極限目標吸附跟隨 ➔ [ 關閉 ✕ ]",
         btnStickOn = "🔒 極限目標吸附跟隨 ➔ [ 開啟 ⚜ ]",
-        btnEspOff = "👁️ 頂級精準玩家透視 (ESP) ➔ [ 關閉 ]",
+        btnEspOff = "👁️ 頂級精準玩家透視 (ESP) ➔ [ 關閉 ✕ ]",
         btnEspOn = "👁️ 頂級精準玩家透視 (ESP) ➔ [ 開啟 ✦ ]",
         targetPlaceholder = "🔍 請輸入鎖定玩家名稱 (留空自動尋敵)...",
-        btnSwitchTarget = "👤 輪替切換下個目標",
-        btnHop = "🌐 智慧伺服器跨頻切換",
+        btnSwitchTarget = "👤 輪替切換下個目標 ⟳",
+        btnHop = "🌐 智慧伺服器跨頻切換 🔀",
         slot1 = "⭐ [ 1 ] 武器欄位", slot2 = "⭐ [ 2 ] 武器欄位", slot3 = "⭐ [ 3 ] 武器欄位",
-        skillBtn = "⚜ 技能 "
+        skillBtn = "⚜ 技能 ➔ "
     },
     EN = {
         titleVIP = "⚜ 👑 KING LEGACY | ULTIMATE VIP CORE 👑 ⚜",
@@ -43,19 +43,19 @@ local Lang = {
         statusOn = "⚡ Status: Auto Bounty Executing... ⚜",
         tabMain = "❖ Main Control",
         tabSkill = "⚡ Skill Config",
-        btnAutoStart = "▶ Start Auto Bounty",
-        btnAutoStop = "⏸ Stop Auto Bounty",
-        btnAimOff = "🌐 360° Skill Aimlock ➔ [ OFF ]",
+        btnAutoStart = "▶ Start Auto Bounty 🚀",
+        btnAutoStop = "⏸ Stop Auto Bounty 🛑",
+        btnAimOff = "🌐 360° Skill Aimlock ➔ [ OFF ✕ ]",
         btnAimOn = "🌐 360° Skill Aimlock ➔ [ ON ⚡ ]",
-        btnStickOff = "🔒 Target Lock Magnet ➔ [ OFF ]",
+        btnStickOff = "🔒 Target Lock Magnet ➔ [ OFF ✕ ]",
         btnStickOn = "🔒 Target Lock Magnet ➔ [ ON ⚜ ]",
-        btnEspOff = "👁️ Pro Player ESP ➔ [ OFF ]",
+        btnEspOff = "👁️ Pro Player ESP ➔ [ OFF ✕ ]",
         btnEspOn = "👁️ Pro Player ESP ➔ [ ON ✦ ]",
         targetPlaceholder = "🔍 Enter Player Name (Blank = Nearest)...",
-        btnSwitchTarget = "👤 Switch Target",
-        btnHop = "🌐 Smart Server Hop",
+        btnSwitchTarget = "👤 Switch Target ⟳",
+        btnHop = "🌐 Smart Server Hop 🔀",
         slot1 = "⭐ [ 1 ] Slot", slot2 = "⭐ [ 2 ] Slot", slot3 = "⭐ [ 3 ] Slot",
-        skillBtn = "⚜ Skill "
+        skillBtn = "⚜ Skill ➔ "
     }
 }
 
@@ -95,11 +95,13 @@ local SlotKeys = {
 }
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "KingLegacy_LuxuryHub_v100"
+gui.Name = "KingLegacy_LuxuryHub_v102"
 gui.Parent = game:GetService("CoreGui")
 
+local fullHeight = userTier == "VIP" and 590 or 145
+
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 420, 0, userTier == "VIP" and 590 or 145)
+mainFrame.Size = UDim2.new(0, 420, 0, fullHeight)
 mainFrame.Position = UDim2.new(0, 40, 0.5, userTier == "VIP" and -295 or -72)
 mainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
 mainFrame.Active = true
@@ -119,7 +121,7 @@ topBar.Parent = mainFrame
 applyCorner(topBar, 16)
 
 local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, -110, 1, 0)
+titleLabel.Size = UDim2.new(1, -150, 1, 0)
 titleLabel.Position = UDim2.new(0, 16, 0, 0)
 titleLabel.BackgroundTransparency = 1
 titleLabel.Text = userTier == "VIP" and Lang[currentLang].titleVIP or Lang[currentLang].titleFree
@@ -130,19 +132,32 @@ titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = topBar
 
 local mainLangBtn = Instance.new("TextButton")
-mainLangBtn.Size = UDim2.new(0, 44, 0, 32)
-mainLangBtn.Position = UDim2.new(1, -86, 0, 10)
+mainLangBtn.Size = UDim2.new(0, 36, 0, 32)
+mainLangBtn.Position = UDim2.new(1, -122, 0, 10)
 mainLangBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
-mainLangBtn.Text = currentLang == "ZH" and "EN" or "中"
+mainLangBtn.Text = currentLang == "ZH" and "EN 🌐" or "中 🌐"
 mainLangBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
 mainLangBtn.Font = Enum.Font.FredokaOne
-mainLangBtn.TextSize = 14
+mainLangBtn.TextSize = 13
 mainLangBtn.Parent = topBar
 applyCorner(mainLangBtn, 8)
 
+-- 最小化 / 放大縮小按鈕 (🗕 / 🗖)
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0, 32, 0, 32)
+minimizeBtn.Position = UDim2.new(1, -82, 0, 10)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+minimizeBtn.Text = "🗕"
+minimizeBtn.TextColor3 = Color3.new(1, 1, 1)
+minimizeBtn.Font = Enum.Font.FredokaOne
+minimizeBtn.TextSize = 14
+minimizeBtn.Parent = topBar
+applyCorner(minimizeBtn, 8)
+
+-- 退出按鈕 (✕)
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 32, 0, 32)
-closeBtn.Position = UDim2.new(1, -38, 0, 10)
+closeBtn.Position = UDim2.new(1, -42, 0, 10)
 closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 60)
 closeBtn.Text = "✕"
 closeBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -151,13 +166,33 @@ closeBtn.TextSize = 15
 closeBtn.Parent = topBar
 applyCorner(closeBtn, 8)
 
+local isMinimized = false
+bindResponsiveClick(minimizeBtn, function()
+    isMinimized = not isMinimized
+    minimizeBtn.Text = isMinimized and "🗖" or "🗕"
+    
+    for _, child in ipairs(mainFrame:GetChildren()) do
+        if child ~= topBar and child ~= stroke then
+            child.Visible = not isMinimized
+        end
+    end
+    
+    mainFrame.Size = isMinimized and UDim2.new(0, 420, 0, 52) or UDim2.new(0, 420, 0, fullHeight)
+end)
+
 bindResponsiveClick(closeBtn, function()
     stop = true
     autoEnabled = false
     standaloneAimEnabled = false
     espEnabled = false
     for _, cache in pairs(espCache) do
-        for _, obj in pairs(cache) do obj:Remove() end
+        for _, obj in pairs(cache) do 
+            if type(obj) == "table" then
+                for _, line in pairs(obj) do line:Remove() end
+            else
+                obj:Remove() 
+            end
+        end
     end
     gui:Destroy()
 end)
@@ -166,7 +201,7 @@ local uiElements = {}
 
 local function updateLanguage()
     titleLabel.Text = userTier == "VIP" and Lang[currentLang].titleVIP or Lang[currentLang].titleFree
-    mainLangBtn.Text = currentLang == "ZH" and "EN" or "中"
+    mainLangBtn.Text = currentLang == "ZH" and "EN 🌐" or "中 🌐"
 
     if userTier == "FREE" then
         if uiElements.aimBtn then
@@ -533,11 +568,10 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ========== 圓角化方框與字體系統 (模擬圓角矩形邊框) ==========
+-- ========== 圓角化方框與字體系統 ==========
 local function createRoundedBoxESP(player)
     if espCache[player] then return end
     
-    -- 用 4 條主線加 4 個角落來拼湊出漂亮的圓角矩形 ESP 框
     local boxLines = {}
     for i = 1, 8 do
         local line = Drawing.new("Line")
@@ -667,34 +701,24 @@ RunService.RenderStepped:Connect(function(deltaTime)
 
                 local teamColor = (p.Team and lp.Team and p.Team == lp.Team) and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 60, 60)
 
-                -- 繪製圓角矩形框 (內縮弧度)
-                local r = math.clamp(width * 0.12, 4, 12) -- 圓角半徑
+                local r = math.clamp(width * 0.12, 4, 12)
                 local lines = cache.BoxLines
 
-                -- 上邊
                 lines[1].From = Vector2.new(posX + r, posY)
                 lines[1].To = Vector2.new(posX + width - r, posY)
-                -- 下邊
                 lines[2].From = Vector2.new(posX + r, posY + height)
                 lines[2].To = Vector2.new(posX + width - r, posY + height)
-                -- 左邊
                 lines[3].From = Vector2.new(posX, posY + r)
                 lines[3].To = Vector2.new(posX, posY + height - r)
-                -- 右邊
                 lines[4].From = Vector2.new(posX + width, posY + r)
                 lines[4].To = Vector2.new(posX + width, posY + height - r)
 
-                -- 四個角的微斜角來模擬圓潤過渡
-                -- 左上角
                 lines[5].From = Vector2.new(posX + r, posY)
                 lines[5].To = Vector2.new(posX, posY + r)
-                -- 右上角
                 lines[6].From = Vector2.new(posX + width - r, posY)
                 lines[6].To = Vector2.new(posX + width, posY + r)
-                -- 左下角
                 lines[7].From = Vector2.new(posX + r, posY + height)
                 lines[7].To = Vector2.new(posX, posY + height - r)
-                -- 右下角
                 lines[8].From = Vector2.new(posX + width - r, posY + height)
                 lines[8].To = Vector2.new(posX + width, posY + height - r)
 
@@ -757,7 +781,7 @@ RunService.RenderStepped:Connect(function(deltaTime)
     local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
     local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
     local tHRP = tChar and (tChar:FindFirstChild("HumanoidRootPart") or tChar:FindFirstChild("Head"))
-    local tHum = tChar and tChar:FindFirstChildOfClass("Humanoid")
+    local tHum = tChar and tChar:FindFirstChild("Humanoid")
 
     if myHRP and myHum and myHum.Health > 0 and tHRP and tHum and tHum.Health > 0 then
         if autoEnabled and stickDeadTarget and userTier == "VIP" then
