@@ -1,90 +1,633 @@
--- King Legacy - 完整功能核心選單 (Core GUI with Full Features)
-local CoreGui = game:GetService("CoreGui")
+-- King Legacy Auto Bounty + VIP/Free Key System + Multi-Language (ZH/EN) v9.0
 
-if CoreGui:FindFirstChild("KL_Main_Core") then
-    CoreGui.KL_Main_Core:Destroy()
+local Players = game:GetService("Players")
+local VIM = game:GetService("VirtualInputManager")
+local UIS = game:GetService("UserInputService")
+local TPS = game:GetService("TeleportService")
+local Http = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+
+local lp = Players.LocalPlayer
+
+-- ========== 多語言字典 (Multi-Language Dictionary) ==========
+local currentLang = "ZH"
+
+local Lang = {
+    ZH = {
+        keyTitle = "🔑 卡號身份驗證 (VIP / Free)",
+        keyPlaceholder = "請輸入 VIP 或 Free 卡號...",
+        keyVerifyBtn = "驗證卡號",
+        keyStatusInit = "請輸入授權卡號驗證權限",
+        keySuccess = "✓ 驗證成功！正在載入 ",
+        keyFailed = "✕ 無效卡號，請重新輸入！",
+        titleVIP = "KING LEGACY | VIP 全功能版",
+        titleFree = "KING LEGACY | FREE 自瞄版",
+        statusOff = "狀態：已停用",
+        statusOn = "狀態：執行中...",
+        tabMain = "主要控制",
+        tabSkill = "技能與欄位",
+        btnAutoStart = "▶ 啟動自動刷賞金",
+        btnAutoStop = "⏸ 停止自動刷賞金",
+        btnAimOff = "🌐 360°全方位技能追蹤/自瞄: OFF",
+        btnAimOn = "🌐 360°全方位技能追蹤/自瞄: ON",
+        btnStickOff = "極限吸附跟隨: OFF",
+        btnStickOn = "極限吸附跟隨: ON",
+        targetPlaceholder = "🔍 輸入指定玩家 (留空自動鎖定)...",
+        btnSwitchTarget = "👤 切換下個目標",
+        btnHop = "🌐 自動伺服器 Hop",
+        slot1 = "[ 1 ] 欄位", slot2 = "[ 2 ] 欄位", slot3 = "[ 3 ] 欄位",
+        skillBtn = "技能 "
+    },
+    EN = {
+        keyTitle = "🔑 Key Authentication (VIP / Free)",
+        keyPlaceholder = "Enter VIP or Free Key...",
+        keyVerifyBtn = "Verify Key",
+        keyStatusInit = "Please enter your key to verify.",
+        keySuccess = "✓ Success! Loading ",
+        keyFailed = "✕ Invalid Key, try again!",
+        titleVIP = "KING LEGACY | VIP Full Version",
+        titleFree = "KING LEGACY | FREE Aim Version",
+        statusOff = "Status: Disabled",
+        statusOn = "Status: Running...",
+        tabMain = "Main Controls",
+        tabSkill = "Skills & Slots",
+        btnAutoStart = "▶ Start Auto Bounty",
+        btnAutoStop = "⏸ Stop Auto Bounty",
+        btnAimOff = "🌐 360° Skill Aimlock: OFF",
+        btnAimOn = "🌐 360° Skill Aimlock: ON",
+        btnStickOff = "Target Lock Magnet: OFF",
+        btnStickOn = "Target Lock Magnet: ON",
+        targetPlaceholder = "🔍 Enter Player Name (Blank = Nearest)...",
+        btnSwitchTarget = "👤 Switch Target",
+        btnHop = "🌐 Server Hop",
+        slot1 = "[ 1 ] Slot", slot2 = "[ 2 ] Slot", slot3 = "[ 3 ] Slot",
+        skillBtn = "Skill "
+    }
+}
+
+-- ========== 卡號與權限設定 ==========
+local KEYS_DATABASE = {
+    ["VIP-KING-8888"] = "VIP",
+    ["VIP-LEGACY-9999"] = "VIP",
+    ["FREE-AIM-2026"] = "FREE",
+    ["FREE-TRY-0000"] = "FREE",
+}
+
+local userTier = nil
+local isKeyValidated = false
+
+-- ========== 驗證 GUI ==========
+local keyGui = Instance.new("ScreenGui")
+keyGui.Name = "KingLegacy_KeySystem"
+keyGui.Parent = game:GetService("CoreGui")
+
+local keyFrame = Instance.new("Frame")
+keyFrame.Size = UDim2.new(0, 320, 0, 180)
+keyFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
+keyFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+keyFrame.Active = true
+keyFrame.Parent = keyGui
+
+local function applyCorner(p, r)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, r or 6)
+    c.Parent = p
+end
+applyCorner(keyFrame, 10)
+
+local keyTopBar = Instance.new("Frame")
+keyTopBar.Size = UDim2.new(1, 0, 0, 36)
+keyTopBar.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
+keyTopBar.Parent = keyFrame
+applyCorner(keyTopBar, 10)
+
+local keyTitle = Instance.new("TextLabel")
+keyTitle.Size = UDim2.new(1, -60, 1, 0)
+keyTitle.Position = UDim2.new(0, 12, 0, 0)
+keyTitle.BackgroundTransparency = 1
+keyTitle.Text = Lang[currentLang].keyTitle
+keyTitle.TextColor3 = Color3.fromRGB(230, 230, 240)
+keyTitle.Font = Enum.Font.GothamBold
+keyTitle.TextSize = 11
+keyTitle.TextXAlignment = Enum.TextXAlignment.Left
+keyTitle.Parent = keyTopBar
+
+-- 驗證介面語言切換鈕
+local keyLangBtn = Instance.new("TextButton")
+keyLangBtn.Size = UDim2.new(0, 36, 0, 22)
+keyLangBtn.Position = UDim2.new(1, -44, 0, 7)
+keyLangBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+keyLangBtn.Text = "EN"
+keyLangBtn.TextColor3 = Color3.new(1, 1, 1)
+keyLangBtn.Font = Enum.Font.GothamBold
+keyLangBtn.TextSize = 10
+keyLangBtn.Parent = keyTopBar
+applyCorner(keyLangBtn, 5)
+
+local keyInput = Instance.new("TextBox")
+keyInput.Size = UDim2.new(1, -30, 0, 36)
+keyInput.Position = UDim2.new(0, 15, 0, 50)
+keyInput.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+keyInput.PlaceholderText = Lang[currentLang].keyPlaceholder
+keyInput.Text = ""
+keyInput.TextColor3 = Color3.fromRGB(240, 240, 240)
+keyInput.Font = Enum.Font.Gotham
+keyInput.TextSize = 11
+keyInput.Parent = keyFrame
+applyCorner(keyInput, 6)
+
+local verifyBtn = Instance.new("TextButton")
+verifyBtn.Size = UDim2.new(1, -30, 0, 36)
+verifyBtn.Position = UDim2.new(0, 15, 0, 96)
+verifyBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 180)
+verifyBtn.Text = Lang[currentLang].keyVerifyBtn
+verifyBtn.TextColor3 = Color3.new(1, 1, 1)
+verifyBtn.Font = Enum.Font.GothamBold
+verifyBtn.TextSize = 12
+verifyBtn.Parent = keyFrame
+applyCorner(verifyBtn, 6)
+
+local keyStatusLabel = Instance.new("TextLabel")
+keyStatusLabel.Size = UDim2.new(1, -30, 0, 20)
+keyStatusLabel.Position = UDim2.new(0, 15, 0, 142)
+keyStatusLabel.BackgroundTransparency = 1
+keyStatusLabel.Text = Lang[currentLang].keyStatusInit
+keyStatusLabel.TextColor3 = Color3.fromRGB(160, 160, 175)
+keyStatusLabel.Font = Enum.Font.Gotham
+keyStatusLabel.TextSize = 10
+keyStatusLabel.Parent = keyFrame
+
+keyLangBtn.Activated:Connect(function()
+    currentLang = currentLang == "ZH" and "EN" or "ZH"
+    keyLangBtn.Text = currentLang == "ZH" and "EN" or "中文"
+    keyTitle.Text = Lang[currentLang].keyTitle
+    keyInput.PlaceholderText = Lang[currentLang].keyPlaceholder
+    verifyBtn.Text = Lang[currentLang].keyVerifyBtn
+    keyStatusLabel.Text = Lang[currentLang].keyStatusInit
+end)
+
+verifyBtn.Activated:Connect(function()
+    local inputKey = keyInput.Text:gsub("%s+", "")
+    local tier = KEYS_DATABASE[inputKey]
+    if tier then
+        userTier = tier
+        keyStatusLabel.Text = Lang[currentLang].keySuccess .. tier .. "..."
+        keyStatusLabel.TextColor3 = Color3.fromRGB(0, 220, 130)
+        task.wait(0.8)
+        isKeyValidated = true
+        keyGui:Destroy()
+    else
+        keyStatusLabel.Text = Lang[currentLang].keyFailed
+        keyStatusLabel.TextColor3 = Color3.fromRGB(230, 60, 70)
+    end
+end)
+
+repeat task.wait(0.2) until isKeyValidated
+
+-- ========== [主程式 UI 與功能] ==========
+
+local stop = false              
+local autoEnabled = false       
+local stickDeadTarget = true    
+local standaloneAimEnabled = false 
+local manualTarget             
+local isTeleporting = false    
+local currentTarget = nil       
+
+local SkillKeys = {
+    [Enum.KeyCode.Q] = true, [Enum.KeyCode.Z] = true,
+    [Enum.KeyCode.X] = false, [Enum.KeyCode.C] = false,
+    [Enum.KeyCode.V] = false, [Enum.KeyCode.E] = false,
+    [Enum.KeyCode.T] = true, [Enum.KeyCode.Y] = true,
+}
+
+local SlotKeys = {
+    [Enum.KeyCode.One] = true, [Enum.KeyCode.Two] = true, [Enum.KeyCode.Three] = true
+}
+
+local function bindResponsiveClick(button, callback)
+    button.Activated:Connect(callback)
+    button.MouseEnter:Connect(function() button.BackgroundTransparency = 0.15 end)
+    button.MouseLeave:Connect(function() button.BackgroundTransparency = 0 end)
 end
 
-local screenGui = Instance.new("ScreenGui", CoreGui)
-screenGui.Name = "KL_Main_Core"
+local gui = Instance.new("ScreenGui")
+gui.Name = "KingLegacy_BountyHub_v90"
+gui.Parent = game:GetService("CoreGui")
 
-local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 500, 0, 420)
-mainFrame.Position = UDim2.new(0.5, -250, 0.5, -210)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-mainFrame.BorderSizePixel = 0
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 320, 0, userTier == "VIP" and 410 or 100)
+mainFrame.Position = UDim2.new(0, 30, 0.5, userTier == "VIP" and -205 or -50)
+mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+mainFrame.Active = true
+mainFrame.Parent = gui
+applyCorner(mainFrame, 10)
 
-local corner = Instance.new("UICorner", mainFrame)
-corner.CornerRadius = UDim.new(0, 10)
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 36)
+topBar.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
+topBar.Parent = mainFrame
+applyCorner(topBar, 10)
 
--- 標題列
-local title = Instance.new("TextLabel", mainFrame)
-title.Size = UDim2.new(1, 0, 0, 50)
-title.BackgroundTransparency = 1
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextSize = 18
-title.Font = Enum.Font.GothamBold
-title.Text = "KING LEGACY — 綜合功能選單 (等級: " .. tostring(getgenv().USER_TIER) .. ")"
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -85, 1, 0)
+titleLabel.Position = UDim2.new(0, 12, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = userTier == "VIP" and Lang[currentLang].titleVIP or Lang[currentLang].titleFree
+titleLabel.TextColor3 = userTier == "VIP" and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(0, 200, 255)
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 11
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = topBar
 
--- 功能按鈕建立函式
-local function createButton(name, yPos, callback)
-    local btn = Instance.new("TextButton", mainFrame)
-    btn.Size = UDim2.new(0, 440, 0, 50)
-    btn.Position = UDim2.new(0.5, -220, 0, yPos)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 15
-    btn.Font = Enum.Font.GothamSemibold
-    btn.Text = name
-    
-    local c = Instance.new("UICorner", btn)
-    c.CornerRadius = UDim.new(0, 6)
-    
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Color = Color3.fromRGB(60, 60, 100)
-    stroke.Thickness = 1
-    
-    btn.Activated:Connect(callback)
-end
+-- 主介面語言切換鈕
+local mainLangBtn = Instance.new("TextButton")
+mainLangBtn.Size = UDim2.new(0, 32, 0, 22)
+mainLangBtn.Position = UDim2.new(1, -66, 0, 7)
+mainLangBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+mainLangBtn.Text = currentLang == "ZH" and "EN" or "中文"
+mainLangBtn.TextColor3 = Color3.new(1, 1, 1)
+mainLangBtn.Font = Enum.Font.GothamBold
+mainLangBtn.TextSize = 10
+mainLangBtn.Parent = topBar
+applyCorner(mainLangBtn, 5)
 
--- 加入各項實用功能按鈕
-createButton("⚔️ 自動農怪與等級 (Auto Farm Level)", 65, function()
-    print("[KL Script] 自動農怪功能已啟動...")
-    -- 這裡可對接你的自動刷等邏輯
-end)
-
-createButton("🏝️ 島嶼瞬間傳送 (Island Teleport)", 125, function()
-    print("[KL Script] 開啟島嶼傳送選單...")
-end)
-
-createButton("⚡ 玩家強化 / 無限體力 (Player Stats & Misc)", 185, function()
-    print("[KL Script] 玩家強化功能已套用...")
-end)
-
-createButton("🔄 尋找低人數伺服器 (Server Hop)", 245, function()
-    print("[KL Script] 正在切換伺服器...")
-    local TeleportService = game:GetService("TeleportService")
-    local Players = game:GetService("Players")
-    TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
-end)
-
--- 關閉按鈕
-local closeBtn = Instance.new("TextButton", mainFrame)
-closeBtn.Size = UDim2.new(0, 440, 0, 40)
-closeBtn.Position = UDim2.new(0.5, -220, 0, 310)
-closeBtn.BackgroundColor3 = Color3.fromRGB(210, 50, 50)
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.Text = "關閉選單"
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 24, 0, 24)
+closeBtn.Position = UDim2.new(1, -28, 0, 6)
+closeBtn.BackgroundColor3 = Color3.fromRGB(230, 60, 70)
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = Color3.new(1, 1, 1)
 closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 15
+closeBtn.Parent = topBar
+applyCorner(closeBtn, 5)
 
-local btnCorner = Instance.new("UICorner", closeBtn)
-btnCorner.CornerRadius = UDim.new(0, 6)
+bindResponsiveClick(closeBtn, function()
+    stop = true
+    autoEnabled = false
+    standaloneAimEnabled = false
+    gui:Destroy()
+end)
 
-local btnStroke = Instance.new("UIStroke", closeBtn)
-btnStroke.Color = Color3.fromRGB(150, 50, 50)
-btnStroke.Thickness = 1
+-- UI 文字更新控制
+local uiElements = {}
 
-closeBtn.Activated:Connect(function()
-    screenGui:Destroy()
+local function updateLanguage()
+    titleLabel.Text = userTier == "VIP" and Lang[currentLang].titleVIP or Lang[currentLang].titleFree
+    mainLangBtn.Text = currentLang == "ZH" and "EN" or "中文"
+
+    if userTier == "FREE" then
+        if uiElements.aimBtn then
+            uiElements.aimBtn.Text = standaloneAimEnabled and Lang[currentLang].btnAimOn or Lang[currentLang].btnAimOff
+        end
+    else
+        if uiElements.statusText then
+            uiElements.statusText.Text = autoEnabled and Lang[currentLang].statusOn or Lang[currentLang].statusOff
+        end
+        if uiElements.mainTabBtn then uiElements.mainTabBtn.Text = Lang[currentLang].tabMain end
+        if uiElements.skillTabBtn then uiElements.skillTabBtn.Text = Lang[currentLang].tabSkill end
+        if uiElements.autoBtn then
+            uiElements.autoBtn.Text = autoEnabled and Lang[currentLang].btnAutoStop or Lang[currentLang].btnAutoStart
+        end
+        if uiElements.aimBtn then
+            uiElements.aimBtn.Text = standaloneAimEnabled and Lang[currentLang].btnAimOn or Lang[currentLang].btnAimOff
+        end
+        if uiElements.stickBtn then
+            uiElements.stickBtn.Text = stickDeadTarget and Lang[currentLang].btnStickOn or Lang[currentLang].btnStickOff
+        end
+        if uiElements.targetInput then uiElements.targetInput.PlaceholderText = Lang[currentLang].targetPlaceholder end
+        if uiElements.switchBtn then uiElements.switchBtn.Text = Lang[currentLang].btnSwitchTarget end
+        if uiElements.hopBtn then uiElements.hopBtn.Text = Lang[currentLang].btnHop end
+    end
+end
+
+mainLangBtn.Activated:Connect(function()
+    currentLang = currentLang == "ZH" and "EN" or "ZH"
+    updateLanguage()
+end)
+
+-- FREE 模式介面
+if userTier == "FREE" then
+    local aimBtn = Instance.new("TextButton")
+    aimBtn.Size = UDim2.new(1, -20, 0, 40)
+    aimBtn.Position = UDim2.new(0, 10, 0, 48)
+    aimBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+    aimBtn.Text = Lang[currentLang].btnAimOff
+    aimBtn.TextColor3 = Color3.new(1, 1, 1)
+    aimBtn.Font = Enum.Font.GothamBold
+    aimBtn.TextSize = 11
+    aimBtn.Parent = mainFrame
+    applyCorner(aimBtn, 6)
+    uiElements.aimBtn = aimBtn
+
+    bindResponsiveClick(aimBtn, function()
+        standaloneAimEnabled = not standaloneAimEnabled
+        aimBtn.BackgroundColor3 = standaloneAimEnabled and Color3.fromRGB(0, 120, 180) or Color3.fromRGB(28, 28, 36)
+        aimBtn.Text = standaloneAimEnabled and Lang[currentLang].btnAimOn or Lang[currentLang].btnAimOff
+    end)
+end
+
+-- VIP 模式介面
+if userTier == "VIP" then
+    local statusFrame = Instance.new("Frame")
+    statusFrame.Size = UDim2.new(1, -20, 0, 28)
+    statusFrame.Position = UDim2.new(0, 10, 0, 42)
+    statusFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+    statusFrame.Parent = mainFrame
+    applyCorner(statusFrame, 6)
+
+    local statusDot = Instance.new("Frame")
+    statusDot.Size = UDim2.new(0, 8, 0, 8)
+    statusDot.Position = UDim2.new(0, 10, 0.5, -4)
+    statusDot.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+    statusDot.Parent = statusFrame
+    applyCorner(statusDot, 4)
+
+    local statusText = Instance.new("TextLabel")
+    statusText.Size = UDim2.new(1, -30, 1, 0)
+    statusText.Position = UDim2.new(0, 24, 0, 0)
+    statusText.BackgroundTransparency = 1
+    statusText.Text = Lang[currentLang].statusOff
+    statusText.TextColor3 = Color3.fromRGB(180, 180, 195)
+    statusText.Font = Enum.Font.GothamMedium
+    statusText.TextSize = 11
+    statusText.TextXAlignment = Enum.TextXAlignment.Left
+    statusText.Parent = statusFrame
+    uiElements.statusText = statusText
+
+    local tabContainer = Instance.new("Frame")
+    tabContainer.Size = UDim2.new(1, -20, 0, 28)
+    tabContainer.Position = UDim2.new(0, 10, 0, 76)
+    tabContainer.BackgroundTransparency = 1
+    tabContainer.Parent = mainFrame
+
+    local mainTabBtn = Instance.new("TextButton")
+    mainTabBtn.Size = UDim2.new(0.48, 0, 1, 0)
+    mainTabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+    mainTabBtn.Text = Lang[currentLang].tabMain
+    mainTabBtn.TextColor3 = Color3.new(1, 1, 1)
+    mainTabBtn.Font = Enum.Font.GothamBold
+    mainTabBtn.TextSize = 11
+    mainTabBtn.Parent = tabContainer
+    applyCorner(mainTabBtn, 6)
+    uiElements.mainTabBtn = mainTabBtn
+
+    local skillTabBtn = Instance.new("TextButton")
+    skillTabBtn.Size = UDim2.new(0.48, 0, 1, 0)
+    skillTabBtn.Position = UDim2.new(0.52, 0, 0, 0)
+    skillTabBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+    skillTabBtn.Text = Lang[currentLang].tabSkill
+    skillTabBtn.TextColor3 = Color3.fromRGB(150, 150, 165)
+    skillTabBtn.Font = Enum.Font.GothamBold
+    skillTabBtn.TextSize = 11
+    skillTabBtn.Parent = tabContainer
+    applyCorner(skillTabBtn, 6)
+    uiElements.skillTabBtn = skillTabBtn
+
+    local pageContainer = Instance.new("Frame")
+    pageContainer.Size = UDim2.new(1, -20, 0, 290)
+    pageContainer.Position = UDim2.new(0, 10, 0, 110)
+    pageContainer.BackgroundTransparency = 1
+    pageContainer.Parent = mainFrame
+
+    local mainPage = Instance.new("Frame")
+    mainPage.Size = UDim2.new(1, 0, 1, 0)
+    mainPage.BackgroundTransparency = 1
+    mainPage.Parent = pageContainer
+
+    local skillPage = Instance.new("Frame")
+    skillPage.Size = UDim2.new(1, 0, 1, 0)
+    skillPage.BackgroundTransparency = 1
+    skillPage.Visible = false
+    skillPage.Parent = pageContainer
+
+    bindResponsiveClick(mainTabBtn, function()
+        mainPage.Visible = true; skillPage.Visible = false
+        mainTabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60); mainTabBtn.TextColor3 = Color3.new(1, 1, 1)
+        skillTabBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 36); skillTabBtn.TextColor3 = Color3.fromRGB(150, 150, 165)
+    end)
+
+    bindResponsiveClick(skillTabBtn, function()
+        mainPage.Visible = false; skillPage.Visible = true
+        skillTabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60); skillTabBtn.TextColor3 = Color3.new(1, 1, 1)
+        mainTabBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 36); mainTabBtn.TextColor3 = Color3.fromRGB(150, 150, 165)
+    end)
+
+    local autoBtn = Instance.new("TextButton")
+    autoBtn.Size = UDim2.new(1, 0, 0, 36)
+    autoBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    autoBtn.Text = Lang[currentLang].btnAutoStart
+    autoBtn.TextColor3 = Color3.fromRGB(0, 220, 130)
+    autoBtn.Font = Enum.Font.GothamBold
+    autoBtn.TextSize = 12
+    autoBtn.Parent = mainPage
+    applyCorner(autoBtn, 6)
+    uiElements.autoBtn = autoBtn
+
+    local aimBtn = Instance.new("TextButton")
+    aimBtn.Size = UDim2.new(1, 0, 0, 30)
+    aimBtn.Position = UDim2.new(0, 0, 0, 42)
+    aimBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+    aimBtn.Text = Lang[currentLang].btnAimOff
+    aimBtn.TextColor3 = Color3.new(1, 1, 1)
+    aimBtn.Font = Enum.Font.GothamMedium
+    aimBtn.TextSize = 11
+    aimBtn.Parent = mainPage
+    applyCorner(aimBtn, 6)
+    uiElements.aimBtn = aimBtn
+
+    bindResponsiveClick(aimBtn, function()
+        standaloneAimEnabled = not standaloneAimEnabled
+        aimBtn.BackgroundColor3 = standaloneAimEnabled and Color3.fromRGB(0, 120, 180) or Color3.fromRGB(28, 28, 36)
+        aimBtn.Text = standaloneAimEnabled and Lang[currentLang].btnAimOn or Lang[currentLang].btnAimOff
+    end)
+
+    local stickBtn = Instance.new("TextButton")
+    stickBtn.Size = UDim2.new(1, 0, 0, 30)
+    stickBtn.Position = UDim2.new(0, 0, 0, 78)
+    stickBtn.BackgroundColor3 = stickDeadTarget and Color3.fromRGB(120, 50, 20) or Color3.fromRGB(28, 28, 36)
+    stickBtn.Text = stickDeadTarget and Lang[currentLang].btnStickOn or Lang[currentLang].btnStickOff
+    stickBtn.TextColor3 = Color3.new(1, 1, 1)
+    stickBtn.Font = Enum.Font.GothamMedium
+    stickBtn.TextSize = 11
+    stickBtn.Parent = mainPage
+    applyCorner(stickBtn, 6)
+    uiElements.stickBtn = stickBtn
+
+    bindResponsiveClick(stickBtn, function()
+        stickDeadTarget = not stickDeadTarget
+        stickBtn.BackgroundColor3 = stickDeadTarget and Color3.fromRGB(120, 50, 20) or Color3.fromRGB(28, 28, 36)
+        stickBtn.Text = stickDeadTarget and Lang[currentLang].btnStickOn or Lang[currentLang].btnStickOff
+    end)
+
+    local targetInput = Instance.new("TextBox")
+    targetInput.Size = UDim2.new(1, 0, 0, 32)
+    targetInput.Position = UDim2.new(0, 0, 0, 116)
+    targetInput.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+    targetInput.PlaceholderText = Lang[currentLang].targetPlaceholder
+    targetInput.Text = ""
+    targetInput.TextColor3 = Color3.fromRGB(240, 240, 240)
+    targetInput.Font = Enum.Font.Gotham
+    targetInput.TextSize = 11
+    targetInput.Parent = mainPage
+    applyCorner(targetInput, 6)
+    uiElements.targetInput = targetInput
+
+    local switchBtn = Instance.new("TextButton")
+    switchBtn.Size = UDim2.new(0.48, 0, 0, 32)
+    switchBtn.Position = UDim2.new(0, 0, 0, 156)
+    switchBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
+    switchBtn.Text = Lang[currentLang].btnSwitchTarget
+    switchBtn.TextColor3 = Color3.new(1, 1, 1)
+    switchBtn.Font = Enum.Font.GothamMedium
+    switchBtn.TextSize = 11
+    switchBtn.Parent = mainPage
+    applyCorner(switchBtn, 6)
+    uiElements.switchBtn = switchBtn
+
+    local hopBtn = Instance.new("TextButton")
+    hopBtn.Size = UDim2.new(0.48, 0, 0, 32)
+    hopBtn.Position = UDim2.new(0.52, 0, 0, 156)
+    hopBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
+    hopBtn.Text = Lang[currentLang].btnHop
+    hopBtn.TextColor3 = Color3.new(1, 1, 1)
+    hopBtn.Font = Enum.Font.GothamMedium
+    hopBtn.TextSize = 11
+    hopBtn.Parent = mainPage
+    applyCorner(hopBtn, 6)
+    uiElements.hopBtn = hopBtn
+
+    -- 欄位與技能列表
+    local slotList = {{key = Enum.KeyCode.One, id = "slot1"}, {key = Enum.KeyCode.Two, id = "slot2"}, {key = Enum.KeyCode.Three, id = "slot3"}}
+    for i, item in ipairs(slotList) do
+        local sBtn = Instance.new("TextButton")
+        sBtn.Size = UDim2.new(0.31, 0, 0, 28)
+        sBtn.Position = UDim2.new((i - 1) * 0.345, 0, 0, 24)
+        sBtn.BackgroundColor3 = SlotKeys[item.key] and Color3.fromRGB(0, 110, 180) or Color3.fromRGB(28, 28, 36)
+        sBtn.Text = Lang[currentLang][item.id]
+        sBtn.TextColor3 = Color3.new(1, 1, 1)
+        sBtn.Font = Enum.Font.GothamMedium
+        sBtn.TextSize = 10
+        sBtn.Parent = skillPage
+        applyCorner(sBtn, 5)
+
+        bindResponsiveClick(sBtn, function()
+            SlotKeys[item.key] = not SlotKeys[item.key]
+            sBtn.BackgroundColor3 = SlotKeys[item.key] and Color3.fromRGB(0, 110, 180) or Color3.fromRGB(28, 28, 36)
+        end)
+    end
+
+    local keysList = {Enum.KeyCode.Q, Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C, Enum.KeyCode.V, Enum.KeyCode.E, Enum.KeyCode.T, Enum.KeyCode.Y}
+    for i, key in ipairs(keysList) do
+        local col, row = (i - 1) % 3, math.floor((i - 1) / 3)
+        local kBtn = Instance.new("TextButton")
+        kBtn.Size = UDim2.new(0.31, 0, 0, 28)
+        kBtn.Position = UDim2.new(col * 0.345, 0, 0, 88 + row * 34)
+        kBtn.BackgroundColor3 = SkillKeys[key] and Color3.fromRGB(40, 130, 70) or Color3.fromRGB(28, 28, 36)
+        kBtn.Text = Lang[currentLang].skillBtn .. key.Name
+        kBtn.TextColor3 = Color3.new(1, 1, 1)
+        kBtn.Font = Enum.Font.GothamMedium
+        kBtn.TextSize = 10
+        kBtn.Parent = skillPage
+        applyCorner(kBtn, 5)
+
+        bindResponsiveClick(kBtn, function()
+            SkillKeys[key] = not SkillKeys[key]
+            kBtn.BackgroundColor3 = SkillKeys[key] and Color3.fromRGB(40, 130, 70) or Color3.fromRGB(28, 28, 36)
+        end)
+    end
+
+    bindResponsiveClick(autoBtn, function()
+        autoEnabled = not autoEnabled
+        if autoEnabled then
+            autoBtn.Text = Lang[currentLang].btnAutoStop
+            autoBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
+            statusDot.BackgroundColor3 = Color3.fromRGB(0, 220, 130)
+            statusText.Text = Lang[currentLang].statusOn
+        else
+            autoBtn.Text = Lang[currentLang].btnAutoStart
+            autoBtn.TextColor3 = Color3.fromRGB(0, 220, 130)
+            statusDot.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+            statusText.Text = Lang[currentLang].statusOff
+        end
+    end)
+end
+
+-- 平滑拖動 UI
+local dragging, dragInput, dragStart, startPos
+topBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+topBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+end)
+RunService.RenderStepped:Connect(function()
+    if dragging and dragInput then
+        local delta = dragInput.Position - dragStart
+        mainFrame.Position = mainFrame.Position:Lerp(UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y), 0.4)
+    end
+end)
+
+-- ========== 核心 360° 自瞄追蹤邏輯 ==========
+local function getClosestPlayer()
+    local myChar = lp.Character
+    local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return nil end
+
+    local closest, shortestDist = nil, math.huge
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local hum = p.Character:FindFirstChildOfClass("Humanoid")
+            if hum and hum.Health > 0 then
+                local dist = (myHRP.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                if dist < shortestDist then
+                    shortestDist = dist
+                    closest = p
+                end
+            end
+        end
+    end
+    return closest
+end
+
+RunService.RenderStepped:Connect(function(deltaTime)
+    if isTeleporting then return end
+
+    local targetToLock = nil
+    if autoEnabled and userTier == "VIP" then targetToLock = currentTarget
+    elseif standaloneAimEnabled then targetToLock = manualTarget or getClosestPlayer() end
+
+    if not targetToLock then return end
+
+    local myChar, tChar = lp.Character, targetToLock.Character
+    local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
+    local tHRP = tChar and (tChar:FindFirstChild("HumanoidRootPart") or tChar:FindFirstChild("Head"))
+    local tHum = tChar and tChar:FindFirstChildOfClass("Humanoid")
+
+    if myHRP and myHum and myHum.Health > 0 and tHRP and tHum and tHum.Health > 0 then
+        if autoEnabled and stickDeadTarget and userTier == "VIP" then
+            local targetCFrame = tHRP.CFrame * CFrame.new(0, 0, 1.5)
+            myHRP.CFrame = myHRP.CFrame:Lerp(targetCFrame, math.clamp(deltaTime * 25, 0, 1))
+            myHRP.AssemblyLinearVelocity = Vector3.zero
+        end
+        
+        local velocity = tHRP.AssemblyLinearVelocity or Vector3.zero
+        local distance = (tHRP.Position - myHRP.Position).Magnitude
+        local timeOffset = math.clamp(distance / 120, 0.08, 0.25)
+        local predictedPos = tHRP.Position + Vector3.new(0, 0.5, 0) + (velocity * timeOffset)
+
+        Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, predictedPos), math.clamp(deltaTime * 35, 0, 1))
+
+        local screenPos, onScreen = Camera:WorldToViewportPoint(predictedPos)
+        if onScreen then VIM:SendMouseMoveEvent(screenPos.X, screenPos.Y, game) end
+    end
 end)
