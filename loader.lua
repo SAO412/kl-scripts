@@ -1,4 +1,4 @@
--- King Legacy Modern Key System & Loader (Universal Request Fix)
+-- King Legacy Modern Key System & Loader (Universal Request Fix + 3H Expiry & Time Display)
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
 local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
@@ -23,26 +23,26 @@ local currentLang = "TW"
 local localizedText = {
     TW = {
         Title = "King Legacy | 專屬授權驗證系統",
-        Subtitle = "請輸入您的購買卡號以啟動腳本",
-        Placeholder = "請輸入卡號 (例如: VIP-KL99-...) ",
+        Subtitle = "免費版享有 3 小時全功能體驗",
+        Placeholder = "請輸入卡號 (例如: KL-FREE-...) ",
         ButtonText = "確認驗證 (Verify)",
         StatusReady = "狀態：請輸入金鑰",
         StatusChecking = "狀態：正在連線驗證伺服器...",
-        Success = "驗證成功！正在載入主程式...",
         InvalidKey = "錯誤：此卡號不存在！",
         HwidLocked = "錯誤：此卡號已被其他電腦綁定！",
+        ExpiredKey = "錯誤：此免費卡號的 3 小時期限已過期！",
         ErrorConn = "錯誤：無法連線至授權伺服器。"
     },
     EN = {
         Title = "King Legacy | Secure Key System",
-        Subtitle = "Please enter your purchased key to load script",
+        Subtitle = "Free tier enjoys 3 hours full access",
         Placeholder = "Enter key here...",
         ButtonText = "Verify Key",
         StatusReady = "Status: Ready for input",
         StatusChecking = "Status: Connecting to server...",
-        Success = "Success! Loading core script...",
         InvalidKey = "Error: Key does not exist!",
         HwidLocked = "Error: Key is bound to another PC!",
+        ExpiredKey = "Error: This free key has expired (3h limit)!",
         ErrorConn = "Error: Failed to connect auth server."
     }
 }
@@ -202,7 +202,27 @@ VerifyButton.MouseButton1Click:Connect(function()
 
     local keyInfo = data[1]
 
+    -- 檢查免費卡號是否已經過期 (3小時限制)
+    if keyInfo.expires_at then
+        local expireTimestamp = DateTime.fromIsoDate(keyInfo.expires_at).UnixTimestamp
+        if os.time() > expireTimestamp then
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+            StatusLabel.Text = localizedText[currentLang].ExpiredKey
+            task.wait(2)
+            LocalPlayer:Kick(localizedText[currentLang].ExpiredKey)
+            return
+        end
+    end
+
+    -- 處理 HWID 綁定與首次啟用設定 3 小時後過期
     if keyInfo.hwid == nil or keyInfo.hwid == "" then
+        local updateData = { hwid = playerHWID }
+        
+        if keyInfo.tier == "Free" then
+            updateData.expires_at = DateTime.fromUnixTimestamp(os.time() + 10800):ToIsoDate()
+            keyInfo.expires_at = updateData.expires_at
+        end
+
         local updateUrl = SUPABASE_URL .. "/rest/v1/keys?key=eq." .. inputKey
         pcall(function()
             requestFunc({
@@ -214,7 +234,7 @@ VerifyButton.MouseButton1Click:Connect(function()
                     ["Content-Type"] = "application/json",
                     ["Prefer"] = "return=minimal"
                 },
-                Body = HttpService:JSONEncode({ hwid = playerHWID })
+                Body = HttpService:JSONEncode(updateData)
             })
         end)
     elseif keyInfo.hwid ~= playerHWID then
@@ -225,10 +245,18 @@ VerifyButton.MouseButton1Click:Connect(function()
         return
     end
 
+    -- 計算剩餘時間並顯示在 UI 上
+    local expireTimestamp = keyInfo.expires_at and DateTime.fromIsoDate(keyInfo.expires_at).UnixTimestamp or (os.time() + 10800)
+    local timeLeft = expireTimestamp - os.time()
+    local hoursLeft = math.floor(timeLeft / 3600)
+    local minsLeft = math.floor((timeLeft % 3600) / 60)
+
     StatusLabel.TextColor3 = Color3.fromRGB(60, 220, 120)
-    StatusLabel.Text = localizedText[currentLang].Success
+    StatusLabel.Text = (currentLang == "TW") and 
+        ("驗證成功！剩餘時間：" .. hoursLeft .. "小時 " .. minsLeft .. "分鐘") or 
+        ("Success! Time left: " .. hoursLeft .. "h " .. minsLeft .. "m")
     
-    task.wait(1)
+    task.wait(1.5)
     ScreenGui:Destroy()
 
     getgenv().__KL_SECURE_AUTH_SESSION_2026__ = {
