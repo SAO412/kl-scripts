@@ -1,4 +1,4 @@
--- King Legacy Auto Bounty + Direct Tier System (v9.8 Extra Large & Rounded Hand-Written Style UI & ESP Core)
+-- King Legacy Auto Bounty + Direct Tier System (v10.0 Fully Rounded Box & Font ESP Core)
 
 local Players = game:GetService("Players")
 local VIM = game:GetService("VirtualInputManager")
@@ -11,7 +11,7 @@ local Camera = workspace.CurrentCamera
 local lp = Players.LocalPlayer
 local userTier = getgenv().USER_TIER or "VIP"
 
--- ========== 多語言字典 (全域超大圓潤手寫風版) ==========
+-- ========== 多語言字典 ==========
 local currentLang = "ZH"
 
 local Lang = {
@@ -94,9 +94,8 @@ local SlotKeys = {
     [Enum.KeyCode.One] = true, [Enum.KeyCode.Two] = true, [Enum.KeyCode.Three] = true
 }
 
--- 放大版奢華主介面 (寬度 420，高度放大)
 local gui = Instance.new("ScreenGui")
-gui.Name = "KingLegacy_LuxuryHub_v98"
+gui.Name = "KingLegacy_LuxuryHub_v100"
 gui.Parent = game:GetService("CoreGui")
 
 local mainFrame = Instance.new("Frame")
@@ -107,7 +106,6 @@ mainFrame.Active = true
 mainFrame.Parent = gui
 applyCorner(mainFrame, 16)
 
--- 質感邊框金線
 local stroke = Instance.new("UIStroke")
 stroke.Color = Color3.fromRGB(212, 175, 55) 
 stroke.Thickness = 2
@@ -127,7 +125,7 @@ titleLabel.BackgroundTransparency = 1
 titleLabel.Text = userTier == "VIP" and Lang[currentLang].titleVIP or Lang[currentLang].titleFree
 titleLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
 titleLabel.Font = Enum.Font.FredokaOne
-titleLabel.TextSize = 15 -- 標題明顯放大
+titleLabel.TextSize = 15
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = topBar
 
@@ -203,7 +201,6 @@ mainLangBtn.Activated:Connect(function()
     updateLanguage()
 end)
 
--- FREE 介面
 if userTier == "FREE" then
     local aimBtn = Instance.new("TextButton")
     aimBtn.Size = UDim2.new(1, -30, 0, 56)
@@ -224,7 +221,6 @@ if userTier == "FREE" then
     end)
 end
 
--- VIP 奢華介面 (全面放大尺寸與字體)
 if userTier == "VIP" then
     local statusFrame = Instance.new("Frame")
     statusFrame.Size = UDim2.new(1, -30, 0, 42)
@@ -537,14 +533,18 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ========== 完美優化縮小 2 倍的 ESP 系統 (同步放大超清晰圓潤文字) ==========
-local function createESP(player)
+-- ========== 圓角化方框與字體系統 (模擬圓角矩形邊框) ==========
+local function createRoundedBoxESP(player)
     if espCache[player] then return end
     
-    local box = Drawing.new("Square")
-    box.Visible = false
-    box.Thickness = 1.5 
-    box.Filled = false
+    -- 用 4 條主線加 4 個角落來拼湊出漂亮的圓角矩形 ESP 框
+    local boxLines = {}
+    for i = 1, 8 do
+        local line = Drawing.new("Line")
+        line.Visible = false
+        line.Thickness = 1.5
+        table.insert(boxLines, line)
+    end
 
     local healthBar = Drawing.new("Line")
     healthBar.Visible = false
@@ -560,7 +560,7 @@ local function createESP(player)
     nameText.Center = true
     nameText.Outline = true
     nameText.Font = 3 
-    nameText.Size = 19 -- ESP 名稱文字再放大，清晰度倍增
+    nameText.Size = 19
     nameText.Color = Color3.fromRGB(255, 255, 255)
 
     local infoText = Drawing.new("Text")
@@ -568,11 +568,11 @@ local function createESP(player)
     infoText.Center = true
     infoText.Outline = true
     infoText.Font = 3
-    infoText.Size = 16 -- ESP 狀態/等級文字同步放大
+    infoText.Size = 16
     infoText.Color = Color3.fromRGB(255, 230, 100)
 
     espCache[player] = {
-        Box = box,
+        BoxLines = boxLines,
         HealthBar = healthBar,
         HealthBarBg = healthBarBg,
         NameText = nameText,
@@ -583,16 +583,20 @@ end
 local function removeESP(player)
     if espCache[player] then
         for _, obj in pairs(espCache[player]) do
-            obj:Remove()
+            if type(obj) == "table" then
+                for _, line in pairs(obj) do line:Remove() end
+            else
+                obj:Remove()
+            end
         end
         espCache[player] = nil
     end
 end
 
 for _, p in ipairs(Players:GetPlayers()) do
-    if p ~= lp then createESP(p) end
+    if p ~= lp then createRoundedBoxESP(p) end
 end
-Players.PlayerAdded:Connect(createESP)
+Players.PlayerAdded:Connect(createRoundedBoxESP)
 Players.PlayerRemoving:Connect(removeESP)
 
 local function getPlayerStatusInfo(player)
@@ -663,10 +667,41 @@ RunService.RenderStepped:Connect(function(deltaTime)
 
                 local teamColor = (p.Team and lp.Team and p.Team == lp.Team) and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 60, 60)
 
-                cache.Box.Size = Vector2.new(width, height)
-                cache.Box.Position = Vector2.new(posX, posY)
-                cache.Box.Color = teamColor
-                cache.Box.Visible = true
+                -- 繪製圓角矩形框 (內縮弧度)
+                local r = math.clamp(width * 0.12, 4, 12) -- 圓角半徑
+                local lines = cache.BoxLines
+
+                -- 上邊
+                lines[1].From = Vector2.new(posX + r, posY)
+                lines[1].To = Vector2.new(posX + width - r, posY)
+                -- 下邊
+                lines[2].From = Vector2.new(posX + r, posY + height)
+                lines[2].To = Vector2.new(posX + width - r, posY + height)
+                -- 左邊
+                lines[3].From = Vector2.new(posX, posY + r)
+                lines[3].To = Vector2.new(posX, posY + height - r)
+                -- 右邊
+                lines[4].From = Vector2.new(posX + width, posY + r)
+                lines[4].To = Vector2.new(posX + width, posY + height - r)
+
+                -- 四個角的微斜角來模擬圓潤過渡
+                -- 左上角
+                lines[5].From = Vector2.new(posX + r, posY)
+                lines[5].To = Vector2.new(posX, posY + r)
+                -- 右上角
+                lines[6].From = Vector2.new(posX + width - r, posY)
+                lines[6].To = Vector2.new(posX + width, posY + r)
+                -- 左下角
+                lines[7].From = Vector2.new(posX + r, posY + height)
+                lines[7].To = Vector2.new(posX, posY + height - r)
+                -- 右下角
+                lines[8].From = Vector2.new(posX + width - r, posY + height)
+                lines[8].To = Vector2.new(posX + width, posY + height - r)
+
+                for _, line in ipairs(lines) do
+                    line.Color = teamColor
+                    line.Visible = true
+                end
 
                 local healthPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
                 local barHeight = height * healthPercent
@@ -681,22 +716,22 @@ RunService.RenderStepped:Connect(function(deltaTime)
                 cache.HealthBar.Visible = true
 
                 cache.NameText.Text = "❖ " .. p.Name .. " [ " .. math.floor(hum.Health) .." HP ] ❖"
-                cache.NameText.Position = Vector2.new(vector.X, posY - 27)
+                cache.NameText.Position = Vector2.new(vector.X, posY - 28)
                 cache.NameText.Visible = true
 
                 local pLevel, pPvp = getPlayerStatusInfo(p)
                 cache.InfoText.Text = "⚜ " .. pLevel .. " ✦ " .. pPvp .. " ⚜"
-                cache.InfoText.Position = Vector2.new(vector.X, posY + height + 5)
+                cache.InfoText.Position = Vector2.new(vector.X, posY + height + 6)
                 cache.InfoText.Visible = true
             else
-                cache.Box.Visible = false
+                for _, line in ipairs(cache.BoxLines) do line.Visible = false end
                 cache.HealthBar.Visible = false
                 cache.HealthBarBg.Visible = false
                 cache.NameText.Visible = false
                 cache.InfoText.Visible = false
             end
         else
-            cache.Box.Visible = false
+            for _, line in ipairs(cache.BoxLines) do line.Visible = false end
             cache.HealthBar.Visible = false
             cache.HealthBarBg.Visible = false
             cache.NameText.Visible = false
