@@ -1,9 +1,17 @@
--- King Legacy Modern Key System & Loader (Bilingual UI + Supabase HWID)
+-- King Legacy Modern Key System & Loader (Universal Request Fix)
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
 local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+
+-- 容錯請求函數（相容 Synapse, Delta, Fluxus, KRNL 等各種執行器）
+local requestFunc = syn and syn.request or request or http and http.request or fluxus and fluxus.request
+
+if not requestFunc then
+    LocalPlayer:Kick("【Error】Your executor does not support HTTP requests!")
+    return
+end
 
 -- 1. 你的 Supabase 專案設定
 local SUPABASE_URL = "https://jqmdlstpxumluolgyfza.supabase.co"
@@ -11,7 +19,7 @@ local SUPABASE_ANON_KEY = "sb_publishable_ZkX5UYbiX_ff5Eszv3xGqg__FiECsDV"
 local playerHWID = RbxAnalyticsService:GetClientId()
 
 -- 2. 多語言字典 (Languages Dictionary)
-local currentLang = "TW" -- 預設繁體中文，可改為 "EN"
+local currentLang = "TW"
 local localizedText = {
     TW = {
         Title = "King Legacy | 專屬授權驗證系統",
@@ -39,18 +47,17 @@ local localizedText = {
     }
 }
 
--- 清理舊的 UI 避免重複生成
+-- 清理舊的 UI
 if CoreGui:FindFirstChild("KL_Secure_Loader") then
     CoreGui.KL_Secure_Loader:Destroy()
 end
 
--- 3. 建立最美觀的現代化 UI 介面
+-- 3. 建立 UI 介面
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "KL_Secure_Loader"
 ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- 主視窗 (毛玻璃深色質感 + 極細漸層邊框)
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 420, 0, 260)
 MainFrame.Position = UDim2.new(0.5, -210, 0.5, -130)
@@ -62,13 +69,11 @@ local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 12)
 UICorner.Parent = MainFrame
 
--- 裝飾性漸層邊框
 local UIStroke = Instance.new("UIStroke")
 UIStroke.Color = Color3.fromRGB(110, 80, 255)
 UIStroke.Thickness = 1.5
 UIStroke.Parent = MainFrame
 
--- 頂部標題與語系切換按鈕
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, -100, 0, 40)
 TitleLabel.Position = UDim2.new(0, 20, 0, 15)
@@ -91,19 +96,17 @@ SubtitleLabel.TextSize = 12
 SubtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 SubtitleLabel.Parent = MainFrame
 
--- 語系切換按鈕 (TW / EN)
 local LangButton = Instance.new("TextButton")
 LangButton.Size = UDim2.new(0, 50, 0, 28)
 LangButton.Position = UDim2.new(1, -70, 0, 20)
 LangButton.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
 LangButton.Font = Enum.Font.GothamBold
-LangButton.Text = currentLang == "TW" and "EN" else "TW"
+LangButton.Text = currentLang == "TW" and "EN" or "TW"
 LangButton.TextColor3 = Color3.fromRGB(200, 200, 220)
 LangButton.TextSize = 12
 LangButton.Parent = MainFrame
 Instance.new("UICorner", LangButton).CornerRadius = UDim.new(0, 6)
 
--- 卡號輸入框
 local InputBox = Instance.new("TextBox")
 InputBox.Size = UDim2.new(1, -40, 0, 48)
 InputBox.Position = UDim2.new(0, 20, 0, 85)
@@ -117,13 +120,11 @@ InputBox.TextSize = 14
 InputBox.Parent = MainFrame
 Instance.new("UICorner", InputBox).CornerRadius = UDim.new(0, 8)
 
--- 輸入框邊框內縮效果
 local InputStroke = Instance.new("UIStroke")
 InputStroke.Color = Color3.fromRGB(45, 45, 60)
 InputStroke.Thickness = 1
 InputStroke.Parent = InputBox
 
--- 狀態提示文字
 local StatusLabel = Instance.new("TextLabel")
 StatusLabel.Size = UDim2.new(1, -40, 0, 20)
 StatusLabel.Position = UDim2.new(0, 20, 0, 142)
@@ -135,7 +136,6 @@ StatusLabel.TextSize = 12
 StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
 StatusLabel.Parent = MainFrame
 
--- 提交驗證按鈕
 local VerifyButton = Instance.new("TextButton")
 VerifyButton.Size = UDim2.new(1, -40, 0, 46)
 VerifyButton.Position = UDim2.new(0, 20, 0, 180)
@@ -147,7 +147,6 @@ VerifyButton.TextSize = 15
 VerifyButton.Parent = MainFrame
 Instance.new("UICorner", VerifyButton).CornerRadius = UDim.new(0, 8)
 
--- 語系切換點擊事件
 LangButton.MouseButton1Click:Connect(function()
     currentLang = currentLang == "TW" and "EN" or "TW"
     LangButton.Text = currentLang == "TW" and "EN" or "TW"
@@ -158,7 +157,6 @@ LangButton.MouseButton1Click:Connect(function()
     StatusLabel.Text = localizedText[currentLang].StatusReady
 end)
 
--- 4. 點擊驗證按鈕的核心邏輯
 VerifyButton.MouseButton1Click:Connect(function()
     local inputKey = InputBox.Text
     if inputKey == "" or inputKey == " " then
@@ -172,10 +170,9 @@ VerifyButton.MouseButton1Click:Connect(function()
     StatusLabel.TextColor3 = Color3.fromRGB(220, 180, 50)
     StatusLabel.Text = localizedText[currentLang].StatusChecking
 
-    -- 向 Supabase 查詢卡號
     local queryUrl = SUPABASE_URL .. "/rest/v1/keys?key=eq." .. inputKey
     local success, response = pcall(function()
-        return syn.request({
+        return requestFunc({
             Url = queryUrl,
             Method = "GET",
             Headers = {
@@ -205,12 +202,10 @@ VerifyButton.MouseButton1Click:Connect(function()
 
     local keyInfo = data[1]
 
-    -- 檢查 HWID 綁定
     if keyInfo.hwid == nil or keyInfo.hwid == "" then
-        -- 首次綁定
         local updateUrl = SUPABASE_URL .. "/rest/v1/keys?key=eq." .. inputKey
         pcall(function()
-            syn.request({
+            requestFunc({
                 Url = updateUrl,
                 Method = "PATCH",
                 Headers = {
@@ -223,7 +218,6 @@ VerifyButton.MouseButton1Click:Connect(function()
             })
         end)
     elseif keyInfo.hwid ~= playerHWID then
-        -- 異機登入防護
         StatusLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
         StatusLabel.Text = localizedText[currentLang].HwidLocked
         task.wait(2)
@@ -231,14 +225,12 @@ VerifyButton.MouseButton1Click:Connect(function()
         return
     end
 
-    -- 驗證成功
     StatusLabel.TextColor3 = Color3.fromRGB(60, 220, 120)
     StatusLabel.Text = localizedText[currentLang].Success
     
     task.wait(1)
     ScreenGui:Destroy()
 
-    -- 傳遞授權資料並載入主程式
     getgenv().__KL_SECURE_AUTH_SESSION_2026__ = {
         Tier = keyInfo.tier,
         Token = "Verified_Secure_Token_987654321"
