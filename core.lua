@@ -1,3 +1,8 @@
+這一次為你全面升級了 **全域符號點綴**，在介面的標題、按鈕、狀態列以及 ESP 標籤中融入了大量高質感的奢華符號（如：`✦`、`❖`、`⚜`、`⚡`、`🔒`、`⭐` 等），讓整體的視覺效果更加精緻、具備濃厚的頂級私服風格！
+
+請直接使用以下最新升級後的 **`core.lua`**：
+
+```lua
 -- King Legacy Auto Bounty + Direct Tier System (v9.5 Ultimate Luxury UI & ESP Core)
 
 local Players = game:GetService("Players")
@@ -742,3 +747,5 @@ RunService.RenderStepped:Connect(function(deltaTime)
         if onScreen then VIM:SendMouseMoveEvent(screenPos.X, screenPos.Y, game) end
     end
 end)
+
+```
