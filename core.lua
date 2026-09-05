@@ -1,4 +1,4 @@
--- King Legacy Auto Bounty + Direct Tier System (v9.0 Clean Core)
+-- King Legacy Auto Bounty + Direct Tier System (v9.0 Clean Core with ESP & Spectate)
 
 local Players = game:GetService("Players")
 local VIM = game:GetService("VirtualInputManager")
@@ -30,6 +30,10 @@ local Lang = {
         btnAimOn = "🌐 360°全方位技能追蹤/自瞄: ON",
         btnStickOff = "極限吸附跟隨: OFF",
         btnStickOn = "極限吸附跟隨: ON",
+        btnEspOff = "👁️ 玩家方框透視 (ESP): OFF",
+        btnEspOn = "👁️ 玩家方框透視 (ESP): ON",
+        btnSpecOff = "🎥 觀看目標視角: OFF",
+        btnSpecOn = "🎥 觀看目標視角: ON",
         targetPlaceholder = "🔍 輸入指定玩家 (留空自動鎖定)...",
         btnSwitchTarget = "👤 切換下個目標",
         btnHop = "🌐 自動伺服器 Hop",
@@ -49,6 +53,10 @@ local Lang = {
         btnAimOn = "🌐 360° Skill Aimlock: ON",
         btnStickOff = "Target Lock Magnet: OFF",
         btnStickOn = "Target Lock Magnet: ON",
+        btnEspOff = "👁️ Player ESP: OFF",
+        btnEspOn = "👁️ Player ESP: ON",
+        btnSpecOff = "🎥 Spectate Target: OFF",
+        btnSpecOn = "🎥 Spectate Target: ON",
         targetPlaceholder = "🔍 Enter Player Name (Blank = Nearest)...",
         btnSwitchTarget = "👤 Switch Target",
         btnHop = "🌐 Server Hop",
@@ -69,15 +77,18 @@ local function bindResponsiveClick(button, callback)
     button.MouseLeave:Connect(function() button.BackgroundTransparency = 0 end)
 end
 
--- ========== [主程式 UI 與功能] ==========
+-- ========== [主程式 UI 與功能變數] ==========
 
 local stop = false              
 local autoEnabled = false       
 local stickDeadTarget = true    
 local standaloneAimEnabled = false 
+local espEnabled = false
+local spectateEnabled = false
 local manualTarget             
 local isTeleporting = false    
 local currentTarget = nil       
+local espBoxes = {}
 
 local SkillKeys = {
     [Enum.KeyCode.Q] = true, [Enum.KeyCode.Z] = true,
@@ -95,8 +106,8 @@ gui.Name = "KingLegacy_BountyHub_v90"
 gui.Parent = game:GetService("CoreGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 320, 0, userTier == "VIP" and 410 or 100)
-mainFrame.Position = UDim2.new(0, 30, 0.5, userTier == "VIP" and -205 or -50)
+mainFrame.Size = UDim2.new(0, 320, 0, userTier == "VIP" and 480 or 100) -- 高度適應新增按鈕
+mainFrame.Position = UDim2.new(0, 30, 0.5, userTier == "VIP" and -240 or -50)
 mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 mainFrame.Active = true
 mainFrame.Parent = gui
@@ -145,6 +156,9 @@ bindResponsiveClick(closeBtn, function()
     stop = true
     autoEnabled = false
     standaloneAimEnabled = false
+    espEnabled = false
+    spectateEnabled = false
+    for _, box in pairs(espBoxes) do box:Remove() end
     gui:Destroy()
 end)
 
@@ -172,6 +186,12 @@ local function updateLanguage()
         end
         if uiElements.stickBtn then
             uiElements.stickBtn.Text = stickDeadTarget and Lang[currentLang].btnStickOn or Lang[currentLang].btnStickOff
+        end
+        if uiElements.espBtn then
+            uiElements.espBtn.Text = espEnabled and Lang[currentLang].btnEspOn or Lang[currentLang].btnEspOff
+        end
+        if uiElements.specBtn then
+            uiElements.specBtn.Text = spectateEnabled and Lang[currentLang].btnSpecOn or Lang[currentLang].btnSpecOff
         end
         if uiElements.targetInput then uiElements.targetInput.PlaceholderText = Lang[currentLang].targetPlaceholder end
         if uiElements.switchBtn then uiElements.switchBtn.Text = Lang[currentLang].btnSwitchTarget end
@@ -263,7 +283,7 @@ if userTier == "VIP" then
     uiElements.skillTabBtn = skillTabBtn
 
     local pageContainer = Instance.new("Frame")
-    pageContainer.Size = UDim2.new(1, -20, 0, 290)
+    pageContainer.Size = UDim2.new(1, -20, 0, 360)
     pageContainer.Position = UDim2.new(0, 10, 0, 110)
     pageContainer.BackgroundTransparency = 1
     pageContainer.Parent = mainFrame
@@ -292,7 +312,7 @@ if userTier == "VIP" then
     end)
 
     local autoBtn = Instance.new("TextButton")
-    autoBtn.Size = UDim2.new(1, 0, 0, 36)
+    autoBtn.Size = UDim2.new(1, 0, 0, 34)
     autoBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
     autoBtn.Text = Lang[currentLang].btnAutoStart
     autoBtn.TextColor3 = Color3.fromRGB(0, 220, 130)
@@ -303,8 +323,8 @@ if userTier == "VIP" then
     uiElements.autoBtn = autoBtn
 
     local aimBtn = Instance.new("TextButton")
-    aimBtn.Size = UDim2.new(1, 0, 0, 30)
-    aimBtn.Position = UDim2.new(0, 0, 0, 42)
+    aimBtn.Size = UDim2.new(1, 0, 0, 28)
+    aimBtn.Position = UDim2.new(0, 0, 0, 40)
     aimBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
     aimBtn.Text = Lang[currentLang].btnAimOff
     aimBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -321,8 +341,8 @@ if userTier == "VIP" then
     end)
 
     local stickBtn = Instance.new("TextButton")
-    stickBtn.Size = UDim2.new(1, 0, 0, 30)
-    stickBtn.Position = UDim2.new(0, 0, 0, 78)
+    stickBtn.Size = UDim2.new(1, 0, 0, 28)
+    stickBtn.Position = UDim2.new(0, 0, 0, 74)
     stickBtn.BackgroundColor3 = stickDeadTarget and Color3.fromRGB(120, 50, 20) or Color3.fromRGB(28, 28, 36)
     stickBtn.Text = stickDeadTarget and Lang[currentLang].btnStickOn or Lang[currentLang].btnStickOff
     stickBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -338,9 +358,47 @@ if userTier == "VIP" then
         stickBtn.Text = stickDeadTarget and Lang[currentLang].btnStickOn or Lang[currentLang].btnStickOff
     end)
 
+    -- 新增 ESP 按鈕
+    local espBtn = Instance.new("TextButton")
+    espBtn.Size = UDim2.new(1, 0, 0, 28)
+    espBtn.Position = UDim2.new(0, 0, 0, 108)
+    espBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+    espBtn.Text = Lang[currentLang].btnEspOff
+    espBtn.TextColor3 = Color3.new(1, 1, 1)
+    espBtn.Font = Enum.Font.GothamMedium
+    espBtn.TextSize = 11
+    espBtn.Parent = mainPage
+    applyCorner(espBtn, 6)
+    uiElements.espBtn = espBtn
+
+    bindResponsiveClick(espBtn, function()
+        espEnabled = not espEnabled
+        espBtn.BackgroundColor3 = espEnabled and Color3.fromRGB(180, 50, 50) or Color3.fromRGB(28, 28, 36)
+        espBtn.Text = espEnabled and Lang[currentLang].btnEspOn or Lang[currentLang].btnEspOff
+    end)
+
+    -- 新增 Spectate 觀看視角按鈕
+    local specBtn = Instance.new("TextButton")
+    specBtn.Size = UDim2.new(1, 0, 0, 28)
+    specBtn.Position = UDim2.new(0, 0, 0, 142)
+    specBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+    specBtn.Text = Lang[currentLang].btnSpecOff
+    specBtn.TextColor3 = Color3.new(1, 1, 1)
+    specBtn.Font = Enum.Font.GothamMedium
+    specBtn.TextSize = 11
+    specBtn.Parent = mainPage
+    applyCorner(specBtn, 6)
+    uiElements.specBtn = specBtn
+
+    bindResponsiveClick(specBtn, function()
+        spectateEnabled = not spectateEnabled
+        specBtn.BackgroundColor3 = spectateEnabled and Color3.fromRGB(50, 130, 180) or Color3.fromRGB(28, 28, 36)
+        specBtn.Text = spectateEnabled and Lang[currentLang].btnSpecOn or Lang[currentLang].btnSpecOff
+    end)
+
     local targetInput = Instance.new("TextBox")
-    targetInput.Size = UDim2.new(1, 0, 0, 32)
-    targetInput.Position = UDim2.new(0, 0, 0, 116)
+    targetInput.Size = UDim2.new(1, 0, 0, 30)
+    targetInput.Position = UDim2.new(0, 0, 0, 176)
     targetInput.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
     targetInput.PlaceholderText = Lang[currentLang].targetPlaceholder
     targetInput.Text = ""
@@ -352,8 +410,8 @@ if userTier == "VIP" then
     uiElements.targetInput = targetInput
 
     local switchBtn = Instance.new("TextButton")
-    switchBtn.Size = UDim2.new(0.48, 0, 0, 32)
-    switchBtn.Position = UDim2.new(0, 0, 0, 156)
+    switchBtn.Size = UDim2.new(0.48, 0, 0, 30)
+    switchBtn.Position = UDim2.new(0, 0, 0, 212)
     switchBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
     switchBtn.Text = Lang[currentLang].btnSwitchTarget
     switchBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -364,8 +422,8 @@ if userTier == "VIP" then
     uiElements.switchBtn = switchBtn
 
     local hopBtn = Instance.new("TextButton")
-    hopBtn.Size = UDim2.new(0.48, 0, 0, 32)
-    hopBtn.Position = UDim2.new(0.52, 0, 0, 156)
+    hopBtn.Size = UDim2.new(0.48, 0, 0, 30)
+    hopBtn.Position = UDim2.new(0.52, 0, 0, 212)
     hopBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
     hopBtn.Text = Lang[currentLang].btnHop
     hopBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -380,7 +438,7 @@ if userTier == "VIP" then
     for i, item in ipairs(slotList) do
         local sBtn = Instance.new("TextButton")
         sBtn.Size = UDim2.new(0.31, 0, 0, 28)
-        sBtn.Position = UDim2.new((i - 1) * 0.345, 0, 0, 24)
+        sBtn.Position = UDim2.new((i - 1) * 0.345, 0, 0, 10)
         sBtn.BackgroundColor3 = SlotKeys[item.key] and Color3.fromRGB(0, 110, 180) or Color3.fromRGB(28, 28, 36)
         sBtn.Text = Lang[currentLang][item.id]
         sBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -400,7 +458,7 @@ if userTier == "VIP" then
         local col, row = (i - 1) % 3, math.floor((i - 1) / 3)
         local kBtn = Instance.new("TextButton")
         kBtn.Size = UDim2.new(0.31, 0, 0, 28)
-        kBtn.Position = UDim2.new(col * 0.345, 0, 0, 88 + row * 34)
+        kBtn.Position = UDim2.new(col * 0.345, 0, 0, 50 + row * 34)
         kBtn.BackgroundColor3 = SkillKeys[key] and Color3.fromRGB(40, 130, 70) or Color3.fromRGB(28, 28, 36)
         kBtn.Text = Lang[currentLang].skillBtn .. key.Name
         kBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -453,7 +511,31 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ========== 核心 360° 自瞄追蹤邏輯 ==========
+-- ========== ESP 繪製初始化 ==========
+local function createESP(player)
+    if espBoxes[player] then return end
+    local box = Drawing.new("Square")
+    box.Visible = false
+    box.Color = Color3.fromRGB(255, 0, 0)
+    box.Thickness = 1.5
+    box.Filled = false
+    espBoxes[player] = box
+end
+
+local function removeESP(player)
+    if espBoxes[player] then
+        espBoxes[player]:Remove()
+        espBoxes[player] = nil
+    end
+end
+
+for _, p in ipairs(Players:GetPlayers()) do
+    if p ~= lp then createESP(p) end
+end
+Players.PlayerAdded:Connect(createESP)
+Players.PlayerRemoving:Connect(removeESP)
+
+-- ========== 核心 360° 自瞄、ESP 與 觀看視角 總迴圈 ==========
 local function getClosestPlayer()
     local myChar = lp.Character
     local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
@@ -476,6 +558,41 @@ local function getClosestPlayer()
 end
 
 RunService.RenderStepped:Connect(function(deltaTime)
+    -- 1. 處理 ESP 方框更新
+    for p, box in pairs(espBoxes) do
+        local char = p.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        
+        if espEnabled and hrp and hum and hum.Health > 0 then
+            local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            if onScreen then
+                local size = math.clamp(2500 / vector.Z, 15, 300)
+                box.Size = Vector2.new(size * 0.6, size)
+                box.Position = Vector2.new(vector.X - box.Size.X / 2, vector.Y - box.Size.Y / 2)
+                box.Color = (p.Team and lp.Team and p.Team == lp.Team) and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 50, 50)
+                box.Visible = true
+            else
+                box.Visible = false
+            end
+        else
+            box.Visible = false
+        end
+    end
+
+    -- 2. 處理觀看其他玩家視角 (Spectate)
+    if spectateEnabled and currentTarget and currentTarget.Character then
+        local tHum = currentTarget.Character:FindFirstChildOfClass("Humanoid")
+        if tHum then
+            Camera.CameraSubject = tHum
+        end
+    else
+        if lp.Character then
+            local myHum = lp.Character:FindFirstChildOfClass("Humanoid")
+            if myHum then Camera.CameraSubject = myHum end
+        end
+    end
+
     if isTeleporting then return end
 
     local targetToLock = nil
