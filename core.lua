@@ -1,4 +1,4 @@
--- King Legacy Auto Bounty + Direct Tier System (v9.2.1 Larger ESP Core)
+-- King Legacy Auto Bounty + Direct Tier System (v9.3 Mega ESP & Status/Level Core)
 
 local Players = game:GetService("Players")
 local VIM = game:GetService("VirtualInputManager")
@@ -97,7 +97,7 @@ local SlotKeys = {
 }
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "KingLegacy_BountyHub_v921"
+gui.Name = "KingLegacy_BountyHub_v93"
 gui.Parent = game:GetService("CoreGui")
 
 local mainFrame = Instance.new("Frame")
@@ -532,22 +532,22 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ========== 放大版 ESP 系統初始化 ==========
+-- ========== 超大尺寸 & 帶有 PVP/等級狀態的 ESP 系統初始化 ==========
 local function createESP(player)
     if espCache[player] then return end
     
     local box = Drawing.new("Square")
     box.Visible = false
-    box.Thickness = 2.5 -- 加粗方框邊線
+    box.Thickness = 3.5 -- 更粗的方框
     box.Filled = false
 
     local healthBar = Drawing.new("Line")
     healthBar.Visible = false
-    healthBar.Thickness = 5 -- 加粗血量條
+    healthBar.Thickness = 7 -- 更粗的血量條
 
     local healthBarBg = Drawing.new("Line")
     healthBarBg.Visible = false
-    healthBarBg.Thickness = 5
+    healthBarBg.Thickness = 7
     healthBarBg.Color = Color3.fromRGB(30, 30, 30)
 
     local nameText = Drawing.new("Text")
@@ -555,14 +555,24 @@ local function createESP(player)
     nameText.Center = true
     nameText.Outline = true
     nameText.Font = 2
-    nameText.Size = 24 -- 放大字體至 24 級
+    nameText.Size = 34 -- 再次放大的巨型字體
     nameText.Color = Color3.fromRGB(255, 255, 255)
+
+    -- 新增：PVP 狀態與等級的下方資訊文字
+    local infoText = Drawing.new("Text")
+    infoText.Visible = false
+    infoText.Center = true
+    infoText.Outline = true
+    infoText.Font = 2
+    infoText.Size = 28 -- 巨型副標題字體
+    infoText.Color = Color3.fromRGB(220, 220, 100)
 
     espCache[player] = {
         Box = box,
         HealthBar = healthBar,
         HealthBarBg = healthBarBg,
-        NameText = nameText
+        NameText = nameText,
+        InfoText = infoText
     }
 end
 
@@ -580,6 +590,40 @@ for _, p in ipairs(Players:GetPlayers()) do
 end
 Players.PlayerAdded:Connect(createESP)
 Players.PlayerRemoving:Connect(removeESP)
+
+-- 自動檢測 King Legacy 玩家等級與 PVP 狀態的輔助函式
+local function getPlayerStatusInfo(player)
+    local level = "LV.?"
+    local pvpStatus = "⚔️ PVP: OFF"
+
+    -- 嘗試從常見的 Data / Leaderstats 讀取等級
+    local ls = player:FindFirstChild("leaderstats")
+    if ls then
+        for _, stat in ipairs(ls:GetChildren()) do
+            local lname = string.lower(stat.Name)
+            if lname:find("level") or lname:find("lv") or lname:find("等級") then
+                level = "LV." .. tostring(stat.Value)
+                break
+            end
+        end
+    end
+    if level == "LV.?" and player:FindFirstChild("Data") and player.Data:FindFirstChild("Level") then
+        level = "LV." .. tostring(player.Data.Level.Value)
+    end
+
+    -- 偵測 King Legacy 的 PVP 開啟狀態 (通常記錄在 Character 屬性或特定 Value 中)
+    local char = player.Character
+    if char then
+        -- 檢查常見的 PVP 標記
+        if char:GetAttribute("PVP") == true or char:FindFirstChild("PVP") and char.PVP.Value == true then
+            pvpStatus = "⚔️ PVP: ON"
+        elseif player:GetAttribute("PVP") == true then
+            pvpStatus = "⚔️ PVP: ON"
+        end
+    end
+
+    return level, pvpStatus
+end
 
 -- ========== 核心 360° 自瞄與 ESP 總迴圈 ==========
 local function getClosestPlayer()
@@ -604,7 +648,7 @@ local function getClosestPlayer()
 end
 
 RunService.RenderStepped:Connect(function(deltaTime)
-    -- 1. 處理放大版 ESP 渲染 (方框、血量條、名稱)
+    -- 1. 處理超大尺寸 ESP 渲染 (方框、血量條、名稱、PVP與等級)
     for p, cache in pairs(espCache) do
         local char = p.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -613,9 +657,9 @@ RunService.RenderStepped:Connect(function(deltaTime)
         if espEnabled and hrp and hum and hum.Health > 0 then
             local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
             if onScreen then
-                -- 將尺寸乘數放大 2.5 倍
-                local size = math.clamp(5500 / vector.Z, 35, 600)
-                local width = size * 0.7
+                -- 尺寸再放大 2 倍的計算
+                local size = math.clamp(11000 / vector.Z, 70, 1200)
+                local width = size * 0.75
                 local height = size
                 local posX = vector.X - width / 2
                 local posY = vector.Y - height / 2
@@ -628,34 +672,42 @@ RunService.RenderStepped:Connect(function(deltaTime)
                 cache.Box.Color = teamColor
                 cache.Box.Visible = true
 
-                -- 血量條更新 (加大距離與粗細)
+                -- 血量條更新
                 local healthPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
                 local barHeight = height * healthPercent
                 
-                cache.HealthBarBg.From = Vector2.new(posX - 10, posY + height)
-                cache.HealthBarBg.To = Vector2.new(posX - 10, posY)
+                cache.HealthBarBg.From = Vector2.new(posX - 14, posY + height)
+                cache.HealthBarBg.To = Vector2.new(posX - 14, posY)
                 cache.HealthBarBg.Visible = true
 
-                cache.HealthBar.From = Vector2.new(posX - 10, posY + height)
-                cache.HealthBar.To = Vector2.new(posX - 10, posY + (height - barHeight))
+                cache.HealthBar.From = Vector2.new(posX - 14, posY + height)
+                cache.HealthBar.To = Vector2.new(posX - 14, posY + (height - barHeight))
                 cache.HealthBar.Color = Color3.fromRGB(255 - (healthPercent * 255), healthPercent * 255, 0)
                 cache.HealthBar.Visible = true
 
-                -- 玩家名稱更新 (位置上移更多避免重疊)
+                -- 玩家名稱與血量更新 (上方)
                 cache.NameText.Text = p.Name .. " [" .. math.floor(hum.Health) .. "]"
-                cache.NameText.Position = Vector2.new(vector.X, posY - 28)
+                cache.NameText.Position = Vector2.new(vector.X, posY - 42)
                 cache.NameText.Visible = true
+
+                -- 玩家等級與 PVP 狀態更新 (下方)
+                local pLevel, pPvp = getPlayerStatusInfo(p)
+                cache.InfoText.Text = pLevel .. " | " .. pPvp
+                cache.InfoText.Position = Vector2.new(vector.X, posY + height + 6)
+                cache.InfoText.Visible = true
             else
                 cache.Box.Visible = false
                 cache.HealthBar.Visible = false
                 cache.HealthBarBg.Visible = false
                 cache.NameText.Visible = false
+                cache.InfoText.Visible = false
             end
         else
             cache.Box.Visible = false
             cache.HealthBar.Visible = false
             cache.HealthBarBg.Visible = false
             cache.NameText.Visible = false
+            cache.InfoText.Visible = false
         end
     end
 
