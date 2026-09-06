@@ -1,4 +1,4 @@
--- King Legacy Auto Bounty + Direct Tier System (v10.2 Ultimate Symbol Edition)
+-- King Legacy Auto Bounty + Direct Tier System (v10.5 Cloud & Discord Link Edition)
 
 local Players = game:GetService("Players")
 local VIM = game:GetService("VirtualInputManager")
@@ -11,13 +11,15 @@ local Camera = workspace.CurrentCamera
 local lp = Players.LocalPlayer
 local userTier = getgenv().USER_TIER or "VIP"
 
--- ========== 多語言字典 (全面配備精緻符號) ==========
+-- ========== 多語言字典 (含可點擊 DC 連結的作者欄位) ==========
 local currentLang = "ZH"
 
 local Lang = {
     ZH = {
         titleVIP = "⚜ 👑 KING LEGACY | 頂級奢華 VIP 核心 👑 ⚜",
         titleFree = "✦ ⚡ KING LEGACY | 輕量奢華 FREE 版 ⚡ ✦",
+        authorText = "✨ 作者：carl | 點我複製 DC 群組 🔗",
+        authorCopied = "📋 已成功複製 Discord 邀請連結至剪貼簿！",
         statusOff = "❖ 狀態：系統安全待命中 ✦",
         statusOn = "⚡ 狀態：極速自動掛機掠奪中... ⚜",
         tabMain = "❖ 核心控制面板",
@@ -39,6 +41,8 @@ local Lang = {
     EN = {
         titleVIP = "⚜ 👑 KING LEGACY | ULTIMATE VIP CORE 👑 ⚜",
         titleFree = "✦ ⚡ KING LEGACY | LUXURY FREE ⚡ ✦",
+        authorText = "✨ Author: carl | Click to Copy DC 🔗",
+        authorCopied = "📋 Discord invite link copied to clipboard!",
         statusOff = "❖ Status: Standby & Secure ✦",
         statusOn = "⚡ Status: Auto Bounty Executing... ⚜",
         tabMain = "❖ Main Control",
@@ -95,14 +99,14 @@ local SlotKeys = {
 }
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "KingLegacy_LuxuryHub_v102"
+gui.Name = "KingLegacy_LuxuryHub_v105"
 gui.Parent = game:GetService("CoreGui")
 
-local fullHeight = userTier == "VIP" and 590 or 145
+local fullHeight = userTier == "VIP" and 625 or 175
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 420, 0, fullHeight)
-mainFrame.Position = UDim2.new(0, 40, 0.5, userTier == "VIP" and -295 or -72)
+mainFrame.Position = UDim2.new(0, 40, 0.5, userTier == "VIP" and -312 or -87)
 mainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
 mainFrame.Active = true
 mainFrame.Parent = gui
@@ -142,7 +146,6 @@ mainLangBtn.TextSize = 13
 mainLangBtn.Parent = topBar
 applyCorner(mainLangBtn, 8)
 
--- 最小化 / 放大縮小按鈕 (🗕 / 🗖)
 local minimizeBtn = Instance.new("TextButton")
 minimizeBtn.Size = UDim2.new(0, 32, 0, 32)
 minimizeBtn.Position = UDim2.new(1, -82, 0, 10)
@@ -154,7 +157,6 @@ minimizeBtn.TextSize = 14
 minimizeBtn.Parent = topBar
 applyCorner(minimizeBtn, 8)
 
--- 退出按鈕 (✕)
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 32, 0, 32)
 closeBtn.Position = UDim2.new(1, -42, 0, 10)
@@ -165,6 +167,33 @@ closeBtn.Font = Enum.Font.FredokaOne
 closeBtn.TextSize = 15
 closeBtn.Parent = topBar
 applyCorner(closeBtn, 8)
+
+-- 可點擊的作者與 DC 連結按鈕 (Author Button)
+local authorBtn = Instance.new("TextButton")
+authorBtn.Size = UDim2.new(1, -30, 0, 26)
+authorBtn.Position = UDim2.new(0, 15, 0, 58)
+authorBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+authorBtn.BackgroundTransparency = 0.5
+authorBtn.Text = Lang[currentLang].authorText
+authorBtn.TextColor3 = Color3.fromRGB(100, 180, 255)
+authorBtn.Font = Enum.Font.FredokaOne
+authorBtn.TextSize = 13
+authorBtn.TextXAlignment = Enum.TextXAlignment.Left
+authorBtn.Parent = mainFrame
+applyCorner(authorBtn, 8)
+
+authorBtn.Activated:Connect(function()
+    local dcLink = "https://discord.gg/9u7UTY6TEg"
+    if setclipboard then
+        setclipboard(dcLink)
+        authorBtn.Text = Lang[currentLang].authorCopied
+        authorBtn.TextColor3 = Color3.fromRGB(0, 230, 130)
+        task.delay(2, function()
+            authorBtn.Text = Lang[currentLang].authorText
+            authorBtn.TextColor3 = Color3.fromRGB(100, 180, 255)
+        end)
+    end
+end)
 
 local isMinimized = false
 bindResponsiveClick(minimizeBtn, function()
@@ -202,6 +231,7 @@ local uiElements = {}
 local function updateLanguage()
     titleLabel.Text = userTier == "VIP" and Lang[currentLang].titleVIP or Lang[currentLang].titleFree
     mainLangBtn.Text = currentLang == "ZH" and "EN 🌐" or "中 🌐"
+    authorBtn.Text = Lang[currentLang].authorText
 
     if userTier == "FREE" then
         if uiElements.aimBtn then
@@ -239,7 +269,7 @@ end)
 if userTier == "FREE" then
     local aimBtn = Instance.new("TextButton")
     aimBtn.Size = UDim2.new(1, -30, 0, 56)
-    aimBtn.Position = UDim2.new(0, 15, 0, 68)
+    aimBtn.Position = UDim2.new(0, 15, 0, 92)
     aimBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
     aimBtn.Text = Lang[currentLang].btnAimOff
     aimBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -259,7 +289,7 @@ end
 if userTier == "VIP" then
     local statusFrame = Instance.new("Frame")
     statusFrame.Size = UDim2.new(1, -30, 0, 42)
-    statusFrame.Position = UDim2.new(0, 15, 0, 62)
+    statusFrame.Position = UDim2.new(0, 15, 0, 90)
     statusFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
     statusFrame.Parent = mainFrame
     applyCorner(statusFrame, 12)
@@ -285,7 +315,7 @@ if userTier == "VIP" then
 
     local tabContainer = Instance.new("Frame")
     tabContainer.Size = UDim2.new(1, -30, 0, 40)
-    tabContainer.Position = UDim2.new(0, 15, 0, 112)
+    tabContainer.Position = UDim2.new(0, 15, 0, 140)
     tabContainer.BackgroundTransparency = 1
     tabContainer.Parent = mainFrame
 
@@ -314,7 +344,7 @@ if userTier == "VIP" then
 
     local pageContainer = Instance.new("Frame")
     pageContainer.Size = UDim2.new(1, -30, 0, 410)
-    pageContainer.Position = UDim2.new(0, 15, 0, 162)
+    pageContainer.Position = UDim2.new(0, 15, 0, 190)
     pageContainer.BackgroundTransparency = 1
     pageContainer.Parent = mainFrame
 
@@ -568,7 +598,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ========== 圓角化方框與字體系統 ==========
+-- ========== 加粗黑邊的 ESP 字體系統 ==========
 local function createRoundedBoxESP(player)
     if espCache[player] then return end
     
@@ -576,34 +606,36 @@ local function createRoundedBoxESP(player)
     for i = 1, 8 do
         local line = Drawing.new("Line")
         line.Visible = false
-        line.Thickness = 1.5
+        line.Thickness = 1.8 
         table.insert(boxLines, line)
     end
 
     local healthBar = Drawing.new("Line")
     healthBar.Visible = false
-    healthBar.Thickness = 4
+    healthBar.Thickness = 4.5
 
     local healthBarBg = Drawing.new("Line")
     healthBarBg.Visible = false
-    healthBarBg.Thickness = 4
+    healthBarBg.Thickness = 4.5
     healthBarBg.Color = Color3.fromRGB(20, 20, 20)
 
     local nameText = Drawing.new("Text")
     nameText.Visible = false
     nameText.Center = true
     nameText.Outline = true
+    nameText.OutlineColor = Color3.fromRGB(0, 0, 0)
     nameText.Font = 3 
-    nameText.Size = 19
+    nameText.Size = 20
     nameText.Color = Color3.fromRGB(255, 255, 255)
 
     local infoText = Drawing.new("Text")
     infoText.Visible = false
     infoText.Center = true
     infoText.Outline = true
+    infoText.OutlineColor = Color3.fromRGB(0, 0, 0)
     infoText.Font = 3
-    infoText.Size = 16
-    infoText.Color = Color3.fromRGB(255, 230, 100)
+    infoText.Size = 17
+    infoText.Color = Color3.fromRGB(255, 225, 80)
 
     espCache[player] = {
         BoxLines = boxLines,
@@ -731,6 +763,7 @@ RunService.RenderStepped:Connect(function(deltaTime)
                 local barHeight = height * healthPercent
                 
                 cache.HealthBarBg.From = Vector2.new(posX - 8, posY + height)
+                cache.HealthBarBg.Name = "BG"
                 cache.HealthBarBg.To = Vector2.new(posX - 8, posY)
                 cache.HealthBarBg.Visible = true
 
@@ -740,7 +773,7 @@ RunService.RenderStepped:Connect(function(deltaTime)
                 cache.HealthBar.Visible = true
 
                 cache.NameText.Text = "❖ " .. p.Name .. " [ " .. math.floor(hum.Health) .." HP ] ❖"
-                cache.NameText.Position = Vector2.new(vector.X, posY - 28)
+                cache.NameText.Position = Vector2.new(vector.X, posY - 30)
                 cache.NameText.Visible = true
 
                 local pLevel, pPvp = getPlayerStatusInfo(p)
